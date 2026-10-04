@@ -98,6 +98,7 @@ export async function getOrCreateReward(userId: number) {
 
 export async function updateRewardPoints(userId: number, pointsToAdd: number) {
   try {
+    await getOrCreateReward(userId);
     const [updatedReward] = await db
       .update(Rewards)
       .set({ 
@@ -477,4 +478,176 @@ export async function getUserBalance(userId: number): Promise<number> {
     return transaction.type.startsWith('earned') ? acc + transaction.amount : acc - transaction.amount
   }, 0);
   return Math.max(balance, 0); // Ensure balance is never negative
+}
+
+export async function getAdminMetrics() {
+  try {
+    const allUsers = await db.select().from(Users).execute();
+    const allReports = await db.select().from(Reports).execute();
+    const allCollected = await db.select().from(CollectedWastes).execute();
+    const allTransactions = await db.select().from(Transactions).execute();
+
+    let totalWasteKg = 0;
+    allReports.forEach(r => {
+      const match = r.amount?.match(/(\d+(\.\d+)?)/);
+      if (match) totalWasteKg += parseFloat(match[0]);
+    });
+
+    const totalPointsEarned = allTransactions
+      .filter(t => t.type?.startsWith('earned'))
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalPointsRedeemed = allTransactions
+      .filter(t => t.type === 'redeemed')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return {
+      totalUsers: allUsers.length,
+      totalReports: allReports.length,
+      totalCollected: allCollected.length,
+      pendingReports: allReports.filter(r => r.status === 'pending').length,
+      totalWasteKg: Math.round(totalWasteKg * 10) / 10,
+      totalPointsEarned,
+      totalPointsRedeemed,
+      co2OffsetKg: Math.round(totalWasteKg * 0.5 * 10) / 10
+    };
+  } catch (error) {
+    console.error("Error fetching admin metrics:", error);
+    return null;
+  }
+}
+
+export async function getAllUsersWithDetailedStats() {
+  try {
+    const allUsers = await db.select().from(Users).orderBy(desc(Users.createdAt)).execute();
+    const allReports = await db.select().from(Reports).execute();
+    const allCollected = await db.select().from(CollectedWastes).execute();
+    const allRewards = await db.select().from(Rewards).execute();
+    const allTransactions = await db.select().from(Transactions).execute();
+
+    return allUsers.map(user => {
+      const userReports = allReports.filter(r => r.userId === user.id);
+      const userCollections = allCollected.filter(c => c.collectorId === user.id);
+      
+      let userWasteKg = 0;
+      userReports.forEach(r => {
+        const match = r.amount?.match(/(\d+(\.\d+)?)/);
+        if (match) userWasteKg += parseFloat(match[0]);
+      });
+
+      const userTrans = allTransactions.filter(t => t.userId === user.id);
+      const balance = userTrans.reduce((acc, t) => {
+        return t.type?.startsWith('earned') ? acc + t.amount : acc - t.amount;
+      }, 0);
+
+      const rewardRow = allRewards.find(rw => rw.userId === user.id);
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt.toISOString().split('T')[0],
+        reportsCount: userReports.length,
+        collectionsCount: userCollections.length,
+        wasteReportedKg: Math.round(userWasteKg * 10) / 10,
+        balance: Math.max(balance, 0),
+        rewardPoints: rewardRow?.points || 0,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching users with stats:", error);
+    return [];
+  }
+}
+
+export async function getAllReportsWithUsers() {
+  try {
+    const reports = await db
+      .select({
+        id: Reports.id,
+        userId: Reports.userId,
+        location: Reports.location,
+        wasteType: Reports.wasteType,
+        amount: Reports.amount,
+        imageUrl: Reports.imageUrl,
+        status: Reports.status,
+        createdAt: Reports.createdAt,
+        collectorId: Reports.collectorId,
+        reporterName: Users.name,
+        reporterEmail: Users.email,
+      })
+      .from(Reports)
+      .leftJoin(Users, eq(Reports.userId, Users.id))
+      .orderBy(desc(Reports.createdAt))
+      .execute();
+
+    return reports.map(r => ({
+      ...r,
+      createdAt: r.createdAt ? r.createdAt.toISOString().split('T')[0] : 'N/A'
+    }));
+  } catch (error) {
+    console.error("Error fetching reports with users:", error);
+    return [];
+  }
+}
+
+export async function getUserComprehensiveAnalytics(userId: number) {
+  try {
+    const userReports = await db.select().from(Reports).where(eq(Reports.userId, userId)).orderBy(desc(Reports.createdAt)).execute();
+    const userCollections = await db.select().from(CollectedWastes).where(eq(CollectedWastes.collectorId, userId)).execute();
+    const userTransactions = await db.select().from(Transactions).where(eq(Transactions.userId, userId)).orderBy(desc(Transactions.date)).execute();
+    const [rewardRow] = await db.select().from(Rewards).where(eq(Rewards.userId, userId)).execute();
+
+    let totalWasteReportedKg = 0;
+    const wasteBreakdown: Record<string, number> = {};
+
+    userReports.forEach(r => {
+      const match = r.amount?.match(/(\d+(\.\d+)?)/);
+      const kg = match ? parseFloat(match[0]) : 0;
+      totalWasteReportedKg += kg;
+
+      const type = (r.wasteType || 'General').toLowerCase();
+      wasteBreakdown[type] = (wasteBreakdown[type] || 0) + 1;
+    });
+
+    const totalEarned = userTransactions
+      .filter(t => t.type?.startsWith('earned'))
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalRedeemed = userTransactions
+      .filter(t => t.type === 'redeemed')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const currentBalance = Math.max(totalEarned - totalRedeemed, 0);
+
+    return {
+      reportsCount: userReports.length,
+      collectionsCount: userCollections.length,
+      totalWasteReportedKg: Math.round(totalWasteReportedKg * 10) / 10,
+      co2OffsetKg: Math.round(totalWasteReportedKg * 0.5 * 10) / 10,
+      totalEarned,
+      totalRedeemed,
+      currentBalance,
+      level: rewardRow?.level || 1,
+      wasteBreakdown,
+      recentReports: userReports.slice(0, 5).map(r => ({
+        id: r.id,
+        location: r.location,
+        wasteType: r.wasteType,
+        amount: r.amount,
+        status: r.status,
+        date: r.createdAt ? r.createdAt.toISOString().split('T')[0] : 'N/A'
+      })),
+      recentTransactions: userTransactions.slice(0, 6).map(t => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        description: t.description,
+        date: t.date ? t.date.toISOString().split('T')[0] : 'N/A'
+      }))
+    };
+  } catch (error) {
+    console.error("Error fetching user comprehensive analytics:", error);
+    return null;
+  }
 }

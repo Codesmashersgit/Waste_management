@@ -18,12 +18,12 @@ import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { createUser, getUnreadNotifications, markNotificationAsRead, getUserByEmail, getUserBalance } from "@/utils/db/actions"
 
-const clientId = "BKBqODxDa2gDj_q0u-8u_E0_MXKMXWCPDF06Lbkrx4__vluHu-N9wcy3UGzIKjp8Ex44eYvflt7kf7Ymsj--QYY";
+const clientId = "BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps";
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0xaa36a7",
-  rpcTarget: "https://rpc.ankr.com/eth_sepolia",
+  rpcTarget: "https://ethereum-sepolia-rpc.publicnode.com",
   displayName: "Ethereum Sepolia Testnet",
   blockExplorerUrl: "https://sepolia.etherscan.io",
   ticker: "ETH",
@@ -56,6 +56,20 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
+    // 1. Immediately read cached user to display instantly
+    const cachedEmail = localStorage.getItem('userEmail');
+    const cachedName = localStorage.getItem('userName');
+    if (cachedEmail) {
+      setLoggedIn(true);
+      setUserInfo({ email: cachedEmail, name: cachedName || cachedEmail.split('@')[0] });
+      getUserByEmail(cachedEmail).then(dbUser => {
+        if (dbUser && dbUser.name) {
+          setUserInfo({ email: cachedEmail, name: dbUser.name });
+          localStorage.setItem('userName', dbUser.name);
+        }
+      }).catch(() => {});
+    }
+
     const init = async () => {
       try {
         await web3auth.initModal();
@@ -63,9 +77,10 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
         if (web3auth.connected) {
           setLoggedIn(true);
           const user = await web3auth.getUserInfo();
-          setUserInfo(user);
-          if (user.email) {
+          if (user && user.email) {
             localStorage.setItem('userEmail', user.email);
+            if (user.name) localStorage.setItem('userName', user.name);
+            setUserInfo(user);
             try { await createUser(user.email, user.name || 'Anonymous User'); } catch (e) {}
           }
         }
@@ -110,21 +125,27 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
       setProvider(p);
       setLoggedIn(true);
       const user = await web3auth.getUserInfo();
-      setUserInfo(user);
-      if (user.email) {
+      if (user && user.email) {
+        setUserInfo(user);
         localStorage.setItem('userEmail', user.email);
+        if (user.name) localStorage.setItem('userName', user.name);
         try { await createUser(user.email, user.name || 'Anonymous User'); } catch (e) {}
       }
     } catch (error) { console.error("Login error:", error); }
   };
 
   const logout = async () => {
-    if (!web3auth) return;
     try {
-      await web3auth.logout();
-      setProvider(null); setLoggedIn(false); setUserInfo(null);
-      localStorage.removeItem('userEmail');
+      if (web3auth && web3auth.connected) {
+        await web3auth.logout();
+      }
     } catch (error) { console.error("Logout error:", error); }
+    setProvider(null); 
+    setLoggedIn(false); 
+    setUserInfo(null);
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    window.location.href = '/';
   };
 
   const handleNotificationClick = async (id: number) => {
@@ -236,47 +257,51 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
           {/* Auth */}
           {!loggedIn ? (
-            <button
-              onClick={login}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-green-200 hover:shadow-md"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Login</span>
-            </button>
+            <Link href="/login">
+              <button className="cursor-pointer flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-green-200 hover:shadow-md">
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Login</span>
+              </button>
+            </Link>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 bg-green-50 border border-green-200 hover:bg-green-100 text-green-700 text-sm font-medium px-3 py-2 rounded-xl transition-all duration-200">
-                  <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center">
-                    <User className="h-3.5 w-3.5 text-white" />
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2.5 bg-green-50/80 border border-green-200/80 hover:bg-green-100 text-green-900 text-sm font-medium px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-green-600 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+                      {(userInfo?.name?.[0] || userInfo?.email?.[0] || 'U').toUpperCase()}
+                    </div>
+                    <div className="flex flex-col text-left leading-none">
+                      <span className="font-semibold text-xs text-gray-800 max-w-[120px] truncate">
+                        {userInfo?.name || userInfo?.email?.split('@')[0] || 'User'}
+                      </span>
+                      <span className="text-[10px] text-green-600 font-medium">Logged in</span>
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl shadow-xl border border-gray-100 p-1.5">
+                  <div className="p-3 border-b border-gray-100 bg-gray-50/50 rounded-xl mb-1">
+                    <p className="text-sm font-bold text-gray-800 truncate">{userInfo?.name || 'User'}</p>
+                    <p className="text-xs text-gray-400 truncate mt-0.5">{userInfo?.email || ''}</p>
                   </div>
-                  <span className="hidden sm:inline max-w-[80px] truncate">
-                    {userInfo?.name?.split(' ')[0] || 'User'}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-xl border border-gray-100">
-                <div className="p-3 border-b border-gray-50">
-                  <p className="text-sm font-semibold text-gray-800 truncate">{userInfo?.name || 'User'}</p>
-                  <p className="text-xs text-gray-400 truncate">{userInfo?.email || ''}</p>
-                </div>
-                <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                  <Link href="/settings">👤 Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                  <Link href="/rewards">🪙 Rewards</Link>
-                </DropdownMenuItem>
-                <div className="border-t border-gray-50 mt-1 pt-1">
-                  <DropdownMenuItem
-                    onClick={logout}
-                    className="cursor-pointer m-1 rounded-xl text-red-500 hover:bg-red-50 focus:text-red-500"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                  <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
+                    <Link href="/settings">👤 Profile</Link>
                   </DropdownMenuItem>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
+                    <Link href="/rewards">🪙 Rewards</Link>
+                  </DropdownMenuItem>
+                  <div className="border-t border-gray-50 mt-1 pt-1">
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="cursor-pointer m-1 rounded-xl text-red-500 hover:bg-red-50 focus:text-red-500 font-medium"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </div>

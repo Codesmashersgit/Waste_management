@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 import { useState, useEffect } from 'react'
-import { ArrowRight, Leaf, Recycle, Users, Coins, MapPin, ChevronRight, TrendingUp, Globe } from 'lucide-react'
+import { ArrowRight, Leaf, Recycle, Users, Coins, MapPin, ChevronRight, TrendingUp, Globe, Shield, LogOut } from 'lucide-react'
 import { Poppins } from 'next/font/google'
 import Link from 'next/link'
 import { getRecentReports, getAllRewards, getWasteCollectionTasks } from '@/utils/db/actions'
@@ -74,6 +74,7 @@ function FeatureCard({ icon: Icon, title, description, badge }: {
 
 export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const [impactData, setImpactData] = useState({
     wasteCollected: 0,
     reportsSubmitted: 0,
@@ -81,10 +82,19 @@ export default function Home() {
     co2Offset: 0
   });
 
+  const handleLogout = () => {
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    window.location.href = '/';
+  };
+
   useEffect(() => {
-    // Check login status
     const email = localStorage.getItem('userEmail');
-    if (email) setLoggedIn(true);
+    const name = localStorage.getItem('userName');
+    if (email) {
+      setLoggedIn(true);
+      setUserName(name || email.split('@')[0]);
+    }
 
     async function fetchImpactData() {
       try {
@@ -112,9 +122,185 @@ export default function Home() {
     fetchImpactData();
   }, []);
 
+  if (!loggedIn) {
+    return (
+      <div className="relative w-full flex flex-col bg-black text-white">
+        {/* Epic Hero Section */}
+        <div className="relative w-full min-h-screen flex flex-col justify-center">
+          <div className="absolute inset-0 z-0 bg-black">
+            <div 
+              className="absolute inset-0 w-full h-full"
+              style={{
+                backgroundImage: 'url(/hero-bg.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                opacity: 0.3,
+              }}
+            />
+          </div>
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/20 via-black/60 to-black pointer-events-none" />
+
+          {/* Minimal Transparent Navbar for Landing Page */}
+          <nav className="absolute top-0 w-full z-10 px-8 py-6 flex justify-between items-center">
+            <div className="flex items-center gap-2 group cursor-pointer">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 border border-green-400/30 flex items-center justify-center backdrop-blur-md glow-green-sm transition-all group-hover:bg-green-500/40">
+                <Leaf className="h-6 w-6 text-green-400" />
+              </div>
+              <div className="flex flex-col leading-none">
+                <span className="font-bold text-white text-xl tracking-tight text-glow">WASTE-CHAiN</span>
+              </div>
+            </div>
+            <Link href="/login">
+              <button className="glass-dark hover:bg-green-600/30 text-white font-medium px-6 py-2.5 rounded-full transition-all duration-300 border border-green-500/30 hover:border-green-400/60 shadow-[0_0_15px_rgba(74,222,128,0.2)] hover:shadow-[0_0_25px_rgba(74,222,128,0.4)]">
+                Login App
+              </button>
+            </Link>
+          </nav>
+
+          {/* Hero Content */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 mt-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-dark border border-green-500/30 mb-6 animate-fade-up">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-green-300 text-sm font-semibold tracking-wide uppercase">Decentralized Sustainability</span>
+            </div>
+
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight max-w-4xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              The Future of <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-300 text-glow">Eco-Cities</span> is Here.
+            </h1>
+            
+            <p className="text-lg md:text-xl text-green-50/80 max-w-2xl mx-auto mb-10 font-light leading-relaxed animate-fade-up" style={{ animationDelay: '0.2s' }}>
+              Join the revolution. Report waste, clean your community, and earn crypto rewards on a verifiable blockchain network. Let's build a greener tomorrow, together.
+            </p>
+
+            <div className="flex flex-wrap gap-4 justify-center animate-fade-up" style={{ animationDelay: '0.3s' }}>
+              <Link href="/login">
+                <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold px-10 py-4 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(74,222,128,0.4)] hover:shadow-[0_0_50px_rgba(74,222,128,0.6)] hover:scale-105 flex items-center gap-2 text-lg">
+                  Enter Ecosystem <ArrowRight className="w-5 h-5" />
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Glassmorphism Stats Footer */}
+          <div className="relative z-10 w-full px-8 pb-12 animate-fade-up" style={{ animationDelay: '0.5s' }}>
+            <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="glass-dark rounded-2xl p-4 flex items-center gap-4">
+                <Recycle className="w-8 h-8 text-green-400" />
+                <div>
+                  <p className="text-2xl font-bold text-white">4,123</p>
+                  <p className="text-xs text-green-200/70 uppercase tracking-wider">Tons Recycled</p>
+                </div>
+              </div>
+              <div className="glass-dark rounded-2xl p-4 flex items-center gap-4">
+                <Users className="w-8 h-8 text-blue-400" />
+                <div>
+                  <p className="text-2xl font-bold text-white">12.5K</p>
+                  <p className="text-xs text-blue-200/70 uppercase tracking-wider">Active Citizens</p>
+                </div>
+              </div>
+              <div className="glass-dark rounded-2xl p-4 flex items-center gap-4">
+                <Coins className="w-8 h-8 text-yellow-400" />
+                <div>
+                  <p className="text-2xl font-bold text-white">2.8M</p>
+                  <p className="text-xs text-yellow-200/70 uppercase tracking-wider">Tokens Earned</p>
+                </div>
+              </div>
+              <div className="glass-dark rounded-2xl p-4 flex items-center gap-4">
+                <Globe className="w-8 h-8 text-emerald-400" />
+                <div>
+                  <p className="text-2xl font-bold text-white">14</p>
+                  <p className="text-xs text-emerald-200/70 uppercase tracking-wider">Cities Active</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Powerful Features Section */}
+        <div className="w-full bg-black py-24 relative overflow-hidden">
+          <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none -translate-y-1/2" />
+          <div className="max-w-6xl mx-auto px-8 relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-white mb-4">Web3 Powers Real-World <span className="text-green-400">Impact</span></h2>
+              <p className="text-gray-400 max-w-2xl mx-auto">WasteCHAiN uses blockchain transparency and AI to create a flawless ecosystem where every action is verified and rewarded.</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="glass-dark p-8 rounded-3xl border border-white/5 hover:border-green-500/30 transition-colors group">
+                <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <MapPin className="w-7 h-7 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">AI-Verified Reporting</h3>
+                <p className="text-gray-400 leading-relaxed">Snap a photo of waste. Our Gemini AI automatically verifies the waste type, quantity, and logs coordinates on the ledger.</p>
+              </div>
+
+              <div className="glass-dark p-8 rounded-3xl border border-white/5 hover:border-green-500/30 transition-colors group">
+                <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Shield className="w-7 h-7 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Immutable Ledger</h3>
+                <p className="text-gray-400 leading-relaxed">Every report and collection task is securely stored on NeonDB. Tamper-proof, transparent, and completely decentralized.</p>
+              </div>
+
+              <div className="glass-dark p-8 rounded-3xl border border-white/5 hover:border-green-500/30 transition-colors group">
+                <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Coins className="w-7 h-7 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">Tokenized Economy</h3>
+                <p className="text-gray-400 leading-relaxed">Earn WASTE tokens instantly for cleaning up. Redeem tokens for premium rewards, NFTs, or trade them on the open market.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* How It Works Steps */}
+        <div className="w-full bg-[#050505] py-24 border-t border-white/5 relative">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-green-900/10 blur-[150px] rounded-full pointer-events-none" />
+          <div className="max-w-6xl mx-auto px-8 relative z-10">
+            <h2 className="text-4xl font-bold text-white mb-16 text-center">Your Journey to <span className="text-green-400">Earn</span></h2>
+            
+            <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
+              <div className="flex flex-col items-center text-center max-w-xs relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500/30 flex items-center justify-center text-3xl font-bold text-white mb-6 z-10 shadow-[0_0_20px_rgba(74,222,128,0.15)]">1</div>
+                <h4 className="text-xl font-bold text-white mb-3">Spot & Report</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">Find illegal dumping or uncollected waste. Take a picture and submit a report.</p>
+                <div className="hidden md:block absolute top-10 left-[60%] w-full h-[2px] bg-gradient-to-r from-green-500/30 to-transparent z-0" />
+              </div>
+              
+              <div className="flex flex-col items-center text-center max-w-xs relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500/30 flex items-center justify-center text-3xl font-bold text-white mb-6 z-10 shadow-[0_0_20px_rgba(74,222,128,0.15)]">2</div>
+                <h4 className="text-xl font-bold text-white mb-3">Community Collection</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">Local collectors accept the task, pick up the waste, and verify the cleanup.</p>
+                <div className="hidden md:block absolute top-10 left-[60%] w-full h-[2px] bg-gradient-to-r from-green-500/30 to-transparent z-0" />
+              </div>
+
+              <div className="flex flex-col items-center text-center max-w-xs relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-600 to-emerald-800 border border-green-400 flex items-center justify-center text-3xl font-bold text-white mb-6 z-10 shadow-[0_0_30px_rgba(74,222,128,0.4)]">3</div>
+                <h4 className="text-xl font-bold text-white mb-3">Get Paid</h4>
+                <p className="text-gray-400 text-sm leading-relaxed">Both reporter and collector receive tokens automatically via smart contracts.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Epic CTA Footer */}
+        <div className="w-full bg-black py-32 relative flex flex-col items-center justify-center text-center px-4">
+          <div className="absolute inset-0 z-0 bg-gradient-to-t from-green-900/30 to-black pointer-events-none" />
+          <h2 className="relative z-10 text-5xl font-black text-white mb-6">Ready to Clean the World?</h2>
+          <p className="relative z-10 text-xl text-gray-400 mb-10 max-w-2xl">Connect your wallet, join thousands of eco-warriors, and start earning today.</p>
+          <Link href="/login" className="relative z-10">
+            <button className="bg-white text-black hover:bg-gray-200 font-bold px-12 py-5 rounded-full transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:scale-105 flex items-center gap-3 text-lg">
+              Launch App <ArrowRight className="w-5 h-5" />
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Dashboard View (Logged In)
   return (
     <div className={`${poppins.className}`}>
-
       {/* ── HERO SECTION ── */}
       <section className="hero-gradient rounded-3xl mx-0 mb-12 overflow-hidden relative">
         {/* Decorative blobs */}
@@ -135,31 +321,21 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight mb-4 text-glow">
-              WASTE<span className="text-green-400">CHAiN</span>
+              WASTE<span className="text-green-400">CHAiN</span> Dashboard
             </h1>
-            <p className="text-green-100/80 text-lg max-w-lg leading-relaxed mb-8">
-              Turning waste into wealth with the power of decentralization—because a cleaner future belongs to everyone.
+            <p className="text-green-100/90 text-lg max-w-lg leading-relaxed mb-8">
+              Welcome back, <span className="font-bold text-green-300 capitalize">{userName || 'Eco Warrior'}</span>! Keep reporting and collecting waste to earn tokens and climb the leaderboard.
             </p>
 
             <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-              {loggedIn ? (
-                <Link href="/report">
-                  <button className="flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-900 font-bold px-8 py-3.5 rounded-2xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:scale-105 active:scale-95">
-                    Report Waste
-                    <ArrowRight className="h-5 w-5" />
-                  </button>
-                </Link>
-              ) : (
-                <button
-                  onClick={() => {}}
-                  className="flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-900 font-bold px-8 py-3.5 rounded-2xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:scale-105 active:scale-95 animate-pulse-ring"
-                >
-                  Get Started
+              <Link href="/report">
+                <button className="flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-900 font-bold px-8 py-3.5 rounded-2xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:scale-105 active:scale-95 cursor-pointer">
+                  Report Waste
                   <ArrowRight className="h-5 w-5" />
                 </button>
-              )}
+              </Link>
               <Link href="/leaderboard">
-                <button className="flex items-center gap-2 border border-green-400/40 text-green-300 hover:bg-green-500/10 font-medium px-6 py-3.5 rounded-2xl transition-all duration-200">
+                <button className="flex items-center gap-2 border border-green-400/40 text-green-300 hover:bg-green-500/10 font-medium px-6 py-3.5 rounded-2xl transition-all duration-200 cursor-pointer">
                   View Leaderboard
                   <TrendingUp className="h-4 w-4" />
                 </button>
@@ -173,7 +349,7 @@ export default function Home() {
       <section className="mb-12">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-green-200" />
-          <h2 className="text-sm font-semibold text-green-600 uppercase tracking-wider px-3">Our Impact</h2>
+          <h2 className="text-sm font-semibold text-green-600 uppercase tracking-wider px-3">Your Community Impact</h2>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-green-200" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -186,8 +362,7 @@ export default function Home() {
 
       {/* ── FEATURES ── */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Why WasteCHAiN?</h2>
-        <p className="text-gray-500 mb-8">Join thousands making a real impact on the environment.</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Quick Actions</h2>
         <div className="grid md:grid-cols-3 gap-6">
           <FeatureCard
             icon={Leaf}

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Trash2, MapPin, CheckCircle, Loader } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getWasteCollectionTasks, updateTaskStatus, saveCollectedWaste, saveReward, getUserByEmail } from '@/utils/db/actions'
+import { getWasteCollectionTasks, updateTaskStatus, saveCollectedWaste, saveReward, getUserByEmail, getUserBalance } from '@/utils/db/actions'
 import { toast } from 'react-hot-toast'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 
@@ -43,6 +43,12 @@ export default function CollectPage() {
       await saveCollectedWaste(task.id, user.id)
       await saveReward(user.id, 20)
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'collected' } : t))
+      
+      try {
+        const newBalance = await getUserBalance(user.id)
+        window.dispatchEvent(new CustomEvent('balanceUpdated', { detail: newBalance }))
+      } catch (_) {}
+
       toast.success('Waste collected! You earned 20 points 🎉')
     } catch (e) {
       toast.error('Failed to collect waste.')

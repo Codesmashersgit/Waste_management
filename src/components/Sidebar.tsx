@@ -1,7 +1,7 @@
 'use client'
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
-import { MapPin, Trash, Coins, Medal, Settings, Home } from "lucide-react"
+import { MapPin, Trash, Coins, Medal, Settings, Home, BarChart3, ShieldCheck } from "lucide-react"
 
 const sidebarItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -9,6 +9,7 @@ const sidebarItems = [
   { href: "/collect", icon: Trash, label: "Collect Waste" },
   { href: "/rewards", icon: Coins, label: "Rewards" },
   { href: "/leaderboard", icon: Medal, label: "Leaderboard" },
+  { href: "/analytics", icon: BarChart3, label: "My Analytics" },
 ]
 
 interface SidebarProps {
