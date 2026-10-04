@@ -14,8 +14,6 @@
 [![Web3Auth](https://img.shields.io/badge/Web3Auth-Sapphire_Devnet-7B3FE4?style=for-the-badge)](https://web3auth.io/)
 [![Gemini AI](https://img.shields.io/badge/Google-Gemini_AI-4285F4?style=for-the-badge&logo=google)](https://ai.google.dev/)
 
-**Built for HackIndia Spark 4 2025 · Team NexGen**
-
 [Live Demo](#) · [Report Bug](https://github.com/Codesmashersgit/Waste_management/issues)
 
 </div>
@@ -209,12 +207,4 @@ The admin dashboard is accessible only at `/admin` (not shown in sidebar for sec
 
 ---
 
-## 🧑‍💻 Team NexGen — HackIndia Spark 4 2025
-
 Built with 💚 for a cleaner, greener, decentralized planet.
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) for details.
