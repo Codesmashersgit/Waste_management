@@ -52,7 +52,7 @@ export default function Sidebar({ open }: SidebarProps) {
                     className={`h-5 w-5 flex-shrink-0 transition-all duration-200
                       ${isActive ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`}
                   />
-                  <span className={`text-sm font-medium ${isActive ? 'text-green-300' : ''}`}>
+                  <span className={`text-sm font-bold tracking-wide ${isActive ? 'text-green-300' : ''}`}>
                     {item.label}
                   </span>
                   {isActive && (
@@ -76,7 +76,7 @@ export default function Sidebar({ open }: SidebarProps) {
                 }`}
             >
               <Settings className="h-5 w-5 text-gray-500 group-hover:text-green-400 transition-colors" />
-              <span className="text-sm font-medium">{t('nav.settings')}</span>
+              <span className="text-sm font-bold tracking-wide">{t('nav.settings')}</span>
             </div>
           </Link>
 
