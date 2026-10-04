@@ -17,6 +17,7 @@ import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base"
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { createUser, getUnreadNotifications, markNotificationAsRead, getUserByEmail, getUserBalance } from "@/utils/db/actions"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 const clientId = "BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps";
 
@@ -54,6 +55,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [balance, setBalance] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
+  const { lang, setLang, t } = useLanguage()
 
   useEffect(() => {
     // 1. Immediately read cached user to display instantly
@@ -182,7 +184,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             </div>
             <div className="hidden sm:flex flex-col leading-none">
               <span className="font-bold text-gray-900 text-base tracking-tight">WASTE-CHAiN</span>
-              <span className="text-[9px] text-gray-400 font-medium">Transparent & Decentralized</span>
+              <span className="text-[9px] text-gray-400 font-medium">{t('header.tagline')}</span>
             </div>
           </Link>
         </div>
@@ -194,7 +196,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search locations, waste types..."
+                placeholder={t('header.search')}
                 className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               />
             </div>
@@ -210,6 +212,15 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             </button>
           )}
 
+          {/* 🌐 Language Toggle */}
+          <button
+            onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-all duration-200 text-xs font-bold text-gray-600 hover:text-green-700"
+            title="Switch Language"
+          >
+            🌐 {lang === 'en' ? 'हिं' : 'EN'}
+          </button>
+
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -224,7 +235,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 rounded-2xl shadow-xl border border-gray-100">
               <div className="p-3 border-b border-gray-50">
-                <p className="text-sm font-semibold text-gray-700">Notifications</p>
+                <p className="text-sm font-semibold text-gray-700">{t('header.notifications')}</p>
               </div>
               {notifications.length > 0 ? (
                 notifications.map((n) => (
@@ -242,7 +253,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
               ) : (
                 <div className="p-6 text-center text-gray-400 text-sm">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  No new notifications
+                  {t('header.no_notifications')}
                 </div>
               )}
             </DropdownMenuContent>
@@ -252,7 +263,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
           <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
             <Coins className="h-4 w-4 text-green-600" />
             <span className="font-bold text-sm text-green-700">{balance.toFixed(0)}</span>
-            <span className="text-xs text-green-500 hidden sm:inline">pts</span>
+            <span className="text-xs text-green-500 hidden sm:inline">{t('header.pts')}</span>
           </div>
 
           {/* Auth */}
@@ -260,7 +271,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             <Link href="/login">
               <button className="cursor-pointer flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-green-200 hover:shadow-md">
                 <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">Login</span>
+                <span className="hidden sm:inline">{t('header.login')}</span>
               </button>
             </Link>
           ) : (
@@ -275,7 +286,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
                       <span className="font-semibold text-xs text-gray-800 max-w-[120px] truncate">
                         {userInfo?.name || userInfo?.email?.split('@')[0] || 'User'}
                       </span>
-                      <span className="text-[10px] text-green-600 font-medium">Logged in</span>
+                      <span className="text-[10px] text-green-600 font-medium">{t('header.logged_in')}</span>
                     </div>
                     <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
                   </button>
@@ -286,17 +297,17 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
                     <p className="text-xs text-gray-400 truncate mt-0.5">{userInfo?.email || ''}</p>
                   </div>
                   <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                    <Link href="/settings">👤 Profile</Link>
+                    <Link href="/settings">👤 {t('header.profile')}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                    <Link href="/rewards">🪙 Rewards</Link>
+                    <Link href="/rewards">🪙 {t('header.rewards')}</Link>
                   </DropdownMenuItem>
                   <div className="border-t border-gray-50 mt-1 pt-1">
                     <DropdownMenuItem
                       onClick={logout}
                       className="cursor-pointer m-1 rounded-xl text-red-500 hover:bg-red-50 focus:text-red-500 font-medium"
                     >
-                      <LogOut className="h-4 w-4 mr-2" /> Sign Out
+                      <LogOut className="h-4 w-4 mr-2" /> {t('header.sign_out')}
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>

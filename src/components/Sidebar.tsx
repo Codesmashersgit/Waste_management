@@ -1,16 +1,8 @@
 'use client'
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
-import { MapPin, Trash, Coins, Medal, Settings, Home, BarChart3, ShieldCheck } from "lucide-react"
-
-const sidebarItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/report", icon: MapPin, label: "Report Waste" },
-  { href: "/collect", icon: Trash, label: "Collect Waste" },
-  { href: "/rewards", icon: Coins, label: "Rewards" },
-  { href: "/leaderboard", icon: Medal, label: "Leaderboard" },
-  { href: "/analytics", icon: BarChart3, label: "My Analytics" },
-]
+import { MapPin, Trash, Coins, Medal, Settings, Home, BarChart3 } from "lucide-react"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 interface SidebarProps {
   open: boolean
@@ -18,6 +10,16 @@ interface SidebarProps {
 
 export default function Sidebar({ open }: SidebarProps) {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const sidebarItems = [
+    { href: "/", icon: Home, label: t('nav.home') },
+    { href: "/report", icon: MapPin, label: t('nav.report') },
+    { href: "/collect", icon: Trash, label: t('nav.collect') },
+    { href: "/rewards", icon: Coins, label: t('nav.rewards') },
+    { href: "/leaderboard", icon: Medal, label: t('nav.leaderboard') },
+    { href: "/analytics", icon: BarChart3, label: t('nav.analytics') },
+  ]
 
   return (
     <aside
@@ -74,14 +76,14 @@ export default function Sidebar({ open }: SidebarProps) {
                 }`}
             >
               <Settings className="h-5 w-5 text-gray-500 group-hover:text-green-400 transition-colors" />
-              <span className="text-sm font-medium">Settings</span>
+              <span className="text-sm font-medium">{t('nav.settings')}</span>
             </div>
           </Link>
 
           {/* Brand tag at bottom */}
           <div className="mt-6 mx-2 p-3 rounded-xl bg-green-900/30 border border-green-500/20">
             <p className="text-xs text-green-400/70 text-center font-medium">WASTE-CHAiN</p>
-            <p className="text-[10px] text-gray-500 text-center mt-0.5">Transparent & Decentralized</p>
+            <p className="text-[10px] text-gray-500 text-center mt-0.5">{t('header.tagline')}</p>
           </div>
         </div>
       </nav>
