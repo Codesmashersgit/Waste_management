@@ -1,210 +1,186 @@
-# 🌍 WasteCHAiN — Decentralized Clean-to-Earn Eco Platform
+# WasteCHAiN
 
-<div align="center">
+**Cleaner places, together.** WasteCHAiN connects residents who report waste, administrators who coordinate a response, and approved collectors who complete pickups. The web dashboard and Expo mobile app use the same PostgreSQL-backed service.
 
-![WasteCHAiN Banner](public/hero-bg.jpg)
+<p align="center">
+  <img src="public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
+</p>
 
-<br/>
+<p align="center">
+  <a href="#screenshots">Screenshots</a> · <a href="#features">Features</a> · <a href="#run-locally">Run locally</a> · <a href="#mobile-app">Mobile app</a> · <a href="#configuration">Configuration</a>
+</p>
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-[![Drizzle ORM](https://img.shields.io/badge/Drizzle-ORM-green?style=for-the-badge)](https://orm.drizzle.team/)
-[![NeonDB](https://img.shields.io/badge/NeonDB-Serverless_PostgreSQL-00E5BE?style=for-the-badge)](https://neon.tech/)
-[![Web3Auth](https://img.shields.io/badge/Web3Auth-Sapphire_Devnet-7B3FE4?style=for-the-badge)](https://web3auth.io/)
-[![Gemini AI](https://img.shields.io/badge/Google-Gemini_AI-4285F4?style=for-the-badge&logo=google)](https://ai.google.dev/)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo) ![TypeScript](https://img.shields.io/badge/TypeScript-5%20%2B%206-3178C6?logo=typescript) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Maps](https://img.shields.io/badge/Maps-OpenStreetMap-7EBC6F?logo=openstreetmap)
 
-[Live Demo](#) · [Report Bug](https://github.com/Codesmashersgit/Waste_management/issues)
+## Screenshots
 
-</div>
+### Web landing page
 
----
+![WasteCHAiN web landing page](docs/screenshots/web-landing.png)
 
-## 🚀 What is WasteCHAiN?
+Screenshots are kept in [`docs/screenshots`](docs/screenshots). The landing screenshot above is from the running web app. Add separate captures for login, dashboard, report flow, admin dispatch, and Android screens as those screens are captured from a seeded/demo account.
 
-**WasteCHAiN** is a **DePIN (Decentralized Physical Infrastructure) + ReFi (Regenerative Finance)** platform that transforms waste management from a civic burden into a **tokenized, AI-verified, community-powered economy**.
+## Features
 
-Citizens earn **WASTE tokens** for reporting and collecting garbage. Every action is verified by **Google Gemini AI** and recorded on a tamper-proof blockchain ledger, making environmental impact transparent and financially rewarding.
+- **Resident reporting:** submit a waste report with type, amount, photo, and a mapped location; view progress and earned contribution points.
+- **Collector workflow:** residents can request collector access; an administrator approves the role. Approved collectors see assigned pickups and update collection status in the mobile app.
+- **Admin coordination:** review the shared report queue, approve collector requests, assign pickups, and inspect account and activity data.
+- **Web and Android clients:** Next.js web dashboard and an Expo Router app connect to the same backend and database.
+- **Authentication:** Web3Auth social sign-in on web and phone OTP on mobile. Mobile OTP supports Twilio Verify, with a development-only fixed OTP option.
+- **Location maps:** Leaflet with OpenStreetMap tiles and attribution. No Google Maps key is required. Mobile displays its map in a WebView.
+- **Points and activity:** report/collection points, rewards, leaderboard, notifications, and transaction history are stored as application data. They are not cryptocurrency or a cash payout.
+- **Optional report assistance:** Gemini-backed report verification is configured on the server. Keep the API key private.
 
-> *"We don't trust manual human claims — our Gemini AI verifies the waste type and volume before any token is minted."*
+## How the workflow fits together
 
----
+```text
+Resident submits a report (photo + location)
+                 ↓
+       Admin reviews the queue
+                 ↓
+ Admin assigns an approved collector
+                 ↓
+ Collector picks up waste and updates status
+                 ↓
+ Shared report status, points, and activity
+```
 
-## ✨ Key Features
+### Account roles
 
-| Feature | Description |
+| Role | How it is granted | Main actions |
+|---|---|---|
+| Resident | Default for a new account | Submit reports, follow status, earn points |
+| Collector | Resident requests access; admin approves it | View assigned work and update pickup status |
+| Admin | Web account matches configured `ADMIN_EMAIL` | Review reports, manage roles, assign work, view dashboard |
+
+## Tech stack
+
+| Area | Implementation |
 |---|---|
-| 🤖 **AI-Verified Reporting** | Upload a photo of waste — Gemini AI instantly identifies the type (plastic, organic, metal), estimates weight, and returns a confidence score |
-| 🔐 **Web3 Login** | Sign in with Google via Web3Auth — your Ethereum wallet is created automatically (non-custodial) |
-| 💰 **Clean-to-Earn** | Earn **10 pts** for reporting waste, **20 pts** for collecting it |
-| 📊 **Personal Analytics** | Track your eco-impact: kg cleaned, CO₂ offset, waste breakdown by category, token ledger |
-| 🏆 **Leaderboard** | City-wide gamified rankings with gold/silver/bronze eco-champions |
-| 🛡️ **Admin Control Center** | Password-protected master dashboard with full citizen audit, analytics per user, and waste report logs |
-| 🌐 **Epic Landing Page** | Sci-Fi animated hero page for unauthenticated users |
-| 🔔 **Real-time Notifications** | In-app notification bell when points are rewarded |
+| Web | Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 4 |
+| Mobile | Expo 57, Expo Router, React Native 0.86, TypeScript |
+| Database | PostgreSQL (Neon-compatible) with Drizzle ORM |
+| Web sign-in | Web3Auth, verified by the server before a signed application session is issued |
+| Mobile sign-in | Phone OTP, server-issued access and refresh sessions; Twilio Verify for deployed SMS |
+| Maps | Leaflet + OpenStreetMap tiles; mobile map in `react-native-webview` |
+| Report assistance | Google Gemini API, server-side only |
 
----
+## Repository layout
 
-## 🛠️ Tech Stack
-
-```
-Frontend       →  Next.js 15 (App Router) + React 19 + TypeScript
-Styling        →  Tailwind CSS 4 + Glassmorphism dark theme
-AI Engine      →  Google Gemini 1.5 Flash (image analysis)
-Authentication →  Web3Auth (Sapphire Devnet) — Google/Social → Ethereum Wallet
-Database       →  NeonDB (Serverless PostgreSQL)
-ORM            →  Drizzle ORM (type-safe schema + migrations)
-Maps           →  Google Maps Places API (location autocomplete)
-Blockchain     →  Ethereum Sepolia Testnet
-```
-
----
-
-## 🗂️ Project Structure
-
-```
+```text
 src/
-├── app/
-│   ├── page.tsx              # Landing page (unauthenticated) + Dashboard (logged in)
-│   ├── login/page.tsx        # Web3Auth login gate
-│   ├── report/page.tsx       # Report waste with AI verification
-│   ├── collect/page.tsx      # Collect waste tasks & earn tokens
-│   ├── rewards/page.tsx      # View & redeem reward points
-│   ├── leaderboard/page.tsx  # City-wide rankings
-│   ├── analytics/page.tsx    # Personal eco analytics dashboard
-│   ├── admin/page.tsx        # 🔒 Admin master control center (password protected)
-│   └── api/
-│       └── admin/login/      # Secure admin authentication API
-├── components/
-│   ├── Header.tsx            # Navigation with live coin balance + user profile
-│   └── Sidebar.tsx           # App navigation sidebar
-├── hooks/
-│   └── useAuthGuard.ts       # Protected route hook
-└── utils/db/
-    ├── schema.ts             # Database schema (Users, Reports, Rewards, Transactions...)
-    ├── dbConfig.ts           # NeonDB connection
-    └── actions.ts            # All DB server actions
+  app/                    Web routes and API endpoints
+  components/             Shared web UI and admin/report components
+  utils/db/               Drizzle schema, database actions, SQL migration
+  utils/                  Authentication and verification helpers
+WasteChain_Mobile/
+  app/                    Expo Router screens and tabs
+  src/                    Mobile API, auth, and map components
+docs/screenshots/         README product screenshots
 ```
 
----
-
-## ⚙️ Getting Started
+## Run locally
 
 ### Prerequisites
-- Node.js 18+
-- Git
 
-### 1. Clone the Repository
+- Node.js 20 or newer and npm
+- PostgreSQL database (Neon works)
+- Web3Auth project credentials for web sign-in
+- Twilio Verify credentials for real mobile SMS; a local development OTP can be used without Twilio
 
-```bash
-git clone https://github.com/Codesmashersgit/Waste_management.git
-cd Waste_management/Waste_Management_App
-```
+### 1. Install and configure the web backend
 
-### 2. Install Dependencies
+From the repository root:
 
 ```bash
 npm install
 ```
 
-### 3. Setup Environment Variables
+Copy `.env.example` to `.env` and fill in the required values described in [Configuration](#configuration). Never commit `.env`.
 
-Create a `.env` file in the root of `Waste_Management_App/`:
-
-```env
-# Database (NeonDB)
-DATABASE_URL=your_neondb_postgresql_url
-
-# Web3Auth
-NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID=your_web3auth_client_id
-WEB3_AUTH_CLIENT_SECRET=your_web3auth_client_secret
-
-# Google Gemini AI
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
-
-# Google Maps
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-
-# Admin Panel (Secret credentials — never commit)
-ADMIN_EMAIL=your_admin_email
-ADMIN_PASSWORD=your_secure_admin_password
-```
-
-### 4. Push Database Schema
+Apply the Drizzle schema to your database:
 
 ```bash
 npm run db:push
 ```
 
-### 5. Run Development Server
+For the phone OTP and referral fields, also apply [`src/utils/db/phone-auth-migration.sql`](src/utils/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
+
+Start the backend:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) 🚀
+Open [http://localhost:3000](http://localhost:3000).
 
----
+### 2. Start the mobile app
 
-## 🔑 Environment Variables Reference
+In another terminal:
 
-| Variable | Where to Get It |
+```bash
+cd WasteChain_Mobile
+npm install
+```
+
+Create `WasteChain_Mobile/.env` with the URL your phone can reach:
+
+```env
+EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:3000
+```
+
+The phone and computer should be on the same Wi-Fi when using a LAN URL. Start the backend on the LAN interface, then start Expo:
+
+```bash
+# From the repository root; allows a phone on your LAN to reach the API
+npm run dev -- --hostname 0.0.0.0
+
+# From WasteChain_Mobile, in a separate terminal
+npx expo start --tunnel
+```
+
+Open the project in Expo Go using the displayed development URL, or scan its QR code. The mobile project includes `expo-dev-client`; if Expo Go reports that a native module is unavailable, use an Android development build (`npx expo run:android`) or an EAS development build. Android location permission is needed for current-location features.
+
+## Configuration
+
+The root [`.env.example`](.env.example) shows the backend variable names. Set real credentials locally; do not paste secrets into source code or `EXPO_PUBLIC_*` values.
+
+| Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | [neon.tech](https://neon.tech) → Create project → Connection string |
-| `NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID` | [dashboard.web3auth.io](https://dashboard.web3auth.io) → Create project → Client ID |
-| `NEXT_PUBLIC_GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | [Google Cloud Console](https://console.cloud.google.com) → Enable Maps Places API |
-| `ADMIN_EMAIL` | Your custom admin email |
-| `ADMIN_PASSWORD` | Your custom secure password |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID` | Public Web3Auth client ID used by the web client (the login UI also accepts the spelling without the second underscore) |
+| `ADMIN_EMAIL` | Web account promoted to the administrator role |
+| `ADMIN_SESSION_SECRET` | Signs the web admin session; use a random secret of at least 32 bytes |
+| `MOBILE_AUTH_SECRET` | Signs mobile access/refresh sessions; use a separate random secret of at least 32 bytes |
+| `GEMINI_API_KEY` | Server-side report verification key |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` | Twilio Verify SMS configuration for mobile OTP |
+| `DEV_OTP_CODE` | Optional six-digit OTP for non-production local development only |
 
----
+For local OTP testing without Twilio, set `DEV_OTP_CODE` in `.env` while `NODE_ENV` is not `production`. The development endpoint returns the configured code to the app, so never enable this in a deployed environment. Do not put any of the server secrets in the mobile `.env` file.
 
-## 🌊 App Flow
+Web3Auth must be configured for the exact app client ID and allowed origins used by your local/deployed web app. The server verifies the returned token against that app configuration before issuing its session; a client ID or verifier mismatch will reject sign-in.
 
-```
-🌐 Landing Page (Epic Sci-Fi Hero)
-         │
-         ▼
-🔐 Login with Web3Auth (Google OAuth → Ethereum Wallet)
-         │
-         ▼
-🏠 Dashboard (Personalized Welcome + Live Stats)
-         │
-    ┌────┴────────────────────┬──────────────────┬─────────────────┐
-    ▼                         ▼                  ▼                 ▼
-📍 Report Waste          ♻️ Collect Waste   🏆 Leaderboard   📊 My Analytics
-(Gemini AI Scan)        (Earn 20 pts)      (City Rankings)   (Eco Telemetry)
-+10 pts earned
-         │
-         ▼
-🪙 Rewards Page (Redeem / Convert to Crypto)
+## Maps and attribution
+
+The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`WasteChain_Mobile/MAPS_SETUP.md`](WasteChain_Mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
+
+## Useful commands
+
+```bash
+npm run dev                         # Web development server
+npm run build                       # Production web build
+npx tsc --noEmit                    # Web TypeScript check
+npm run db:push                     # Apply Drizzle schema changes
+cd WasteChain_Mobile && npx expo start --tunnel
+cd WasteChain_Mobile && npm run typecheck
 ```
 
----
+## Notes
 
-## 💡 How Users Earn Real Rewards
-
-1. **Report Waste** → `+10 Points` (verified by Gemini AI)
-2. **Collect Waste** → `+20 Points`
-3. **Points → WASTE Tokens** (claimable to Ethereum Sepolia wallet)
-4. **Tokens → INR** via crypto exchange (Binance, CoinDCX, UPI payout)
-
-### Revenue Model (How the Platform Sustains Rewards)
-- 🏭 **EPR Funds** — FMCG brands (Pepsi, Unilever, ITC) pay for verified plastic collection certificates
-- ♻️ **Raw Material Sales** — Collected waste sold to recycling plants
-- 🌱 **Carbon Credits** — Each 100 kg of plastic = verified carbon offset credits tradeable on global markets
+- Points are in-app contribution/reward records. No token minting, blockchain payout, exchange conversion, or cash redemption is implemented by this README's documented workflow.
+- Gemini verification depends on a valid server-side key and network access. The report form and stored report data remain part of the app workflow.
+- OpenStreetMap tiles require internet access unless you configure an offline-capable tile service separately.
 
 ---
 
-## 🛡️ Admin Panel
-
-The admin dashboard is accessible only at `/admin` (not shown in sidebar for security).
-
-- Enter credentials configured in `.env` (`ADMIN_EMAIL` + `ADMIN_PASSWORD`)
-- View all registered citizens, their reports, collections, token balances
-- Individual citizen audit with full transaction ledger
-- Waste report master log with status filters
-
----
-
-Built with 💚 for a cleaner, greener, decentralized planet.
+Built for cleaner neighborhoods and a clearer path from report to pickup.
