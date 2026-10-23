@@ -1,18 +1,15 @@
 {
-  "name": "waste-management",
+  "name": "wastechain-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev apps/web",
-    "build": "next build apps/web",
-    "start": "next start apps/web",
-    "lint": "eslint apps/web/src",
-    "db:push": "drizzle-kit push",
-    "db:studio": "npx drizzle-kit studio"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
-    "@neondatabase/serverless": "^1.0.0",
     "@radix-ui/react-dropdown-menu": "^2.1.6",
     "@radix-ui/react-slot": "^1.1.2",
     "@web3auth/base": "^9.7.0",
@@ -27,7 +24,6 @@
     "lucide-react": "^0.486.0",
     "next": "15.2.4",
     "next-auth": "^4.24.15",
-    "pg": "^8.14.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
@@ -40,14 +36,11 @@
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
-    "@types/pg": "^8.11.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "drizzle-kit": "^0.30.6",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
-    "tsx": "^4.19.3",
     "typescript": "^5"
   }
 }

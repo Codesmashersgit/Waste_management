@@ -3,7 +3,7 @@
 **Cleaner places, together.** WasteCHAiN connects residents who report waste, administrators who coordinate a response, and approved collectors who complete pickups. The web dashboard and Expo mobile app use the same PostgreSQL-backed service.
 
 <p align="center">
-  <img src="apps/web/public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
+  <img src="web/public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
 </p>
 
 <p align="center">
@@ -16,9 +16,9 @@
 
 ### Web landing page
 
-![WasteCHAiN web landing page](apps/web/docs/screenshots/web-landing.png)
+![WasteCHAiN web landing page](web/docs/screenshots/web-landing.png)
 
-Screenshots are stored in [`apps/web/docs/screenshots`](apps/web/docs/screenshots). The landing screenshot above is from the web app.
+Screenshots are stored in [`web/docs/screenshots`](web/docs/screenshots). The landing screenshot above is from the web app.
 
 ## Features
 
@@ -68,23 +68,40 @@ Resident submits a report (photo + location)
 ## Repository layout
 
 ```text
-apps/
-  web/                    Next.js frontend and HTTP route adapters
-    src/app/              Pages, layouts, and /api routes
-    src/components/       Web UI components
-    src/server/           Web session adapter
-    public/               Web static assets
-    docs/                 Web documentation and screenshots
-  backend/                Shared server-side domain and data layer
-    src/db/               Drizzle schema, queries, and SQL migration
-    src/                  Auth, OTP, session, and verification services
-  mobile/                 Expo React Native Android/iOS app
-    app/                  Expo Router screens and tabs
-    components/           Mobile UI and map components
-    utils/                Mobile API and impact helpers
+web/                      Next.js frontend and HTTP route adapters
+  src/app/                Pages, layouts, and /api routes
+  src/components/         Web UI components
+  src/server/             Web session adapter
+  public/                 Web static assets
+  docs/                   Web documentation and screenshots
+  next.config.ts          Next.js configuration
+  postcss.config.mjs      Tailwind/PostCSS configuration
+  components.json         Web UI component generator config
+  eslint.config.mjs       Web lint configuration
+  tsconfig.json           Web TypeScript configuration
+  package.json            Web dependencies and commands
+  package-lock.json       Locked web dependencies
+backend/                  Shared server-side domain and data layer
+  src/db/                 Drizzle schema, queries, and SQL migration
+  src/                    Auth, OTP, session, and verification services
+  drizzle.config.js       Database schema/migration config
+  tsconfig.json           Backend TypeScript configuration
+  package.json            Backend dependencies and database commands
+  package-lock.json       Locked backend dependencies
+  .env.example            Backend/web server configuration template
+mobile/                   Expo React Native Android/iOS app
+  app/                    Expo Router screens and tabs
+  components/             Mobile UI and map components
+  utils/                  Mobile API and impact helpers
+  app.config.ts            Expo app configuration
+  eas.json                EAS build profiles
+  package-lock.json       Locked mobile dependencies
+  package.json            Mobile dependencies and Expo commands
+README.md                 Project overview and setup guide
+.gitignore                Shared ignore rules
 ```
 
-The Next.js `/api/*` files are thin HTTP adapters because Next hosts those routes. Database access, authentication/session logic, OTP, and verification services live separately under `apps/backend/src` and are imported through the `@backend/*` alias.
+The Next.js `/api/*` files are HTTP adapters because Next hosts those routes. Database access, authentication/session logic, OTP, and verification services live separately under `backend/src` and are imported through the `@backend/*` alias.
 
 ## Run locally
 
@@ -95,15 +112,17 @@ The Next.js `/api/*` files are thin HTTP adapters because Next hosts those route
 - Web3Auth project credentials for web sign-in
 - Twilio Verify credentials for real mobile SMS; a local development OTP can be used without Twilio
 
-### 1. Install and configure the web app and backend
+### 1. Install and configure the backend
 
-From the repository root:
+From the repository root, install the backend dependencies and create its environment file:
 
 ```bash
+cd backend
 npm install
+cp .env.example .env
 ```
 
-Copy `.env.example` to the repository root as `.env` and fill in the required values described in [Configuration](#configuration). For Twilio SMS, copy the Twilio variables from [`mobile-auth.env.example`](mobile-auth.env.example) into the same `.env` file. Never commit `.env`.
+Fill in the values described in [Configuration](#configuration). Keep `backend/.env` private and never commit it.
 
 Apply the Drizzle schema to your database:
 
@@ -111,38 +130,45 @@ Apply the Drizzle schema to your database:
 npm run db:push
 ```
 
-For the phone OTP and referral fields, also apply [`apps/backend/src/db/phone-auth-migration.sql`](apps/backend/src/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
+For the phone OTP and referral fields, also apply [`backend/src/db/phone-auth-migration.sql`](backend/src/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
 
-Start the web app and its API:
+### 2. Start the web app and its API
+
+In another terminal, from the repository root:
 
 ```bash
+cd web
+npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Mobile app setup
+### 3. Start the mobile app
 
 In another terminal:
 
 ```bash
-cd apps/mobile
+cd mobile
 npm install
 ```
 
-Create `apps/mobile/.env` with the URL your phone can reach:
+Create `mobile/.env` with the URL your phone can reach:
 
 ```env
 EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:3000
 ```
 
-The phone and computer should be on the same Wi-Fi when using a LAN URL. Start the backend on the LAN interface, then start Expo:
+The phone and computer should be on the same Wi-Fi when using a LAN URL. Start the web API on the LAN interface, then start Expo:
 
 ```bash
-# From the repository root; allows a phone on your LAN to reach the API
+cd web
 npm run dev -- --hostname 0.0.0.0
+```
 
-# From apps/mobile, in a separate terminal
+From `mobile/`, start Expo in another terminal:
+
+```bash
 npx expo start --tunnel
 ```
 
@@ -150,7 +176,7 @@ Open the project in Expo Go using the displayed development URL, or scan its QR 
 
 ## Configuration
 
-The root [`.env.example`](.env.example) shows the shared backend and web variable names. Set real credentials locally; do not paste secrets into source code or `EXPO_PUBLIC_*` values.
+The [`backend/.env.example`](backend/.env.example) file lists backend and web server variables. Set real credentials in `backend/.env`; do not paste secrets into source code or `EXPO_PUBLIC_*` values. The mobile app has a separate [`mobile/.env.example`](mobile/.env.example) for public client settings such as its API URL.
 
 | Variable | Purpose |
 |---|---|
@@ -163,24 +189,23 @@ The root [`.env.example`](.env.example) shows the shared backend and web variabl
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` | Twilio Verify SMS configuration for mobile OTP |
 | `DEV_OTP_CODE` | Optional six-digit OTP for non-production local development only |
 
-For local OTP testing without Twilio, set `DEV_OTP_CODE` in `.env` while `NODE_ENV` is not `production`. The development endpoint returns the configured code to the app, so never enable this in a deployed environment. Do not put any of the server secrets in the mobile `.env` file.
+For local OTP testing without Twilio, set `DEV_OTP_CODE` in `backend/.env` while `NODE_ENV` is not `production`. The development endpoint returns the configured code to the app, so never enable this in a deployed environment. Do not put any of the server secrets in `mobile/.env`.
 
 Web3Auth must be configured for the exact app client ID and allowed origins used by your local/deployed web app. The server verifies the returned token against that app configuration before issuing its session; a client ID or verifier mismatch will reject sign-in.
 
 ## Maps and attribution
 
-The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`apps/mobile/MAPS_SETUP.md`](apps/mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
+The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`mobile/MAPS_SETUP.md`](mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
 
 ## Useful commands
 
-```bash
-npm run dev                         # Web development server
-npm run build                       # Production web build
-npx tsc --noEmit -p apps/web        # Web + backend TypeScript check
-npm run db:push                     # Apply Drizzle schema changes
-cd apps/mobile && npx expo start --tunnel
-cd apps/mobile && npm run typecheck
-```
+Run these commands from the matching app folder:
+
+| Folder | Commands |
+|---|---|
+| `web/` | `npm run dev`, `npm run build`, `npx tsc --noEmit` |
+| `backend/` | `npm run db:push`, `npm run typecheck` |
+| `mobile/` | `npx expo start --tunnel`, `npm run typecheck` |
 
 ## Notes
 

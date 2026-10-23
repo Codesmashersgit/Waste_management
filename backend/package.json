@@ -1,0 +1,21 @@
+{
+  "name": "wastechain-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.41.0",
+    "jose": "^4.15.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "drizzle-kit": "^0.30.6",
+    "typescript": "^5"
+  }
+}
