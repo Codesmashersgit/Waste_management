@@ -3,11 +3,11 @@
 **Cleaner places, together.** WasteCHAiN connects residents who report waste, administrators who coordinate a response, and approved collectors who complete pickups. The web dashboard and Expo mobile app use the same PostgreSQL-backed service.
 
 <p align="center">
-  <img src="public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
+  <img src="apps/web/public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
 </p>
 
 <p align="center">
-  <a href="#screenshots">Screenshots</a> · <a href="#features">Features</a> · <a href="#run-locally">Run locally</a> · <a href="#mobile-app">Mobile app</a> · <a href="#configuration">Configuration</a>
+  <a href="#screenshots">Screenshots</a> · <a href="#features">Features</a> · <a href="#run-locally">Run locally</a> · <a href="#mobile-app-setup">Mobile app</a> · <a href="#configuration">Configuration</a>
 </p>
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo) ![TypeScript](https://img.shields.io/badge/TypeScript-5%20%2B%206-3178C6?logo=typescript) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Maps](https://img.shields.io/badge/Maps-OpenStreetMap-7EBC6F?logo=openstreetmap)
@@ -16,9 +16,9 @@
 
 ### Web landing page
 
-![WasteCHAiN web landing page](docs/screenshots/web-landing.png)
+![WasteCHAiN web landing page](apps/web/docs/screenshots/web-landing.png)
 
-Screenshots are kept in [`docs/screenshots`](docs/screenshots). The landing screenshot above is from the running web app. Add separate captures for login, dashboard, report flow, admin dispatch, and Android screens as those screens are captured from a seeded/demo account.
+Screenshots are stored in [`apps/web/docs/screenshots`](apps/web/docs/screenshots). The landing screenshot above is from the web app.
 
 ## Features
 
@@ -68,16 +68,23 @@ Resident submits a report (photo + location)
 ## Repository layout
 
 ```text
-src/
-  app/                    Web routes and API endpoints
-  components/             Shared web UI and admin/report components
-  utils/db/               Drizzle schema, database actions, SQL migration
-  utils/                  Authentication and verification helpers
-WasteChain_Mobile/
-  app/                    Expo Router screens and tabs
-  src/                    Mobile API, auth, and map components
-docs/screenshots/         README product screenshots
+apps/
+  web/                    Next.js frontend and HTTP route adapters
+    src/app/              Pages, layouts, and /api routes
+    src/components/       Web UI components
+    src/server/           Web session adapter
+    public/               Web static assets
+    docs/                 Web documentation and screenshots
+  backend/                Shared server-side domain and data layer
+    src/db/               Drizzle schema, queries, and SQL migration
+    src/                  Auth, OTP, session, and verification services
+  mobile/                 Expo React Native Android/iOS app
+    app/                  Expo Router screens and tabs
+    components/           Mobile UI and map components
+    utils/                Mobile API and impact helpers
 ```
+
+The Next.js `/api/*` files are thin HTTP adapters because Next hosts those routes. Database access, authentication/session logic, OTP, and verification services live separately under `apps/backend/src` and are imported through the `@backend/*` alias.
 
 ## Run locally
 
@@ -88,7 +95,7 @@ docs/screenshots/         README product screenshots
 - Web3Auth project credentials for web sign-in
 - Twilio Verify credentials for real mobile SMS; a local development OTP can be used without Twilio
 
-### 1. Install and configure the web backend
+### 1. Install and configure the web app and backend
 
 From the repository root:
 
@@ -96,7 +103,7 @@ From the repository root:
 npm install
 ```
 
-Copy `.env.example` to `.env` and fill in the required values described in [Configuration](#configuration). Never commit `.env`.
+Copy `.env.example` to the repository root as `.env` and fill in the required values described in [Configuration](#configuration). For Twilio SMS, copy the Twilio variables from [`mobile-auth.env.example`](mobile-auth.env.example) into the same `.env` file. Never commit `.env`.
 
 Apply the Drizzle schema to your database:
 
@@ -104,9 +111,9 @@ Apply the Drizzle schema to your database:
 npm run db:push
 ```
 
-For the phone OTP and referral fields, also apply [`src/utils/db/phone-auth-migration.sql`](src/utils/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
+For the phone OTP and referral fields, also apply [`apps/backend/src/db/phone-auth-migration.sql`](apps/backend/src/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
 
-Start the backend:
+Start the web app and its API:
 
 ```bash
 npm run dev
@@ -114,16 +121,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### 2. Start the mobile app
+### Mobile app setup
 
 In another terminal:
 
 ```bash
-cd WasteChain_Mobile
+cd apps/mobile
 npm install
 ```
 
-Create `WasteChain_Mobile/.env` with the URL your phone can reach:
+Create `apps/mobile/.env` with the URL your phone can reach:
 
 ```env
 EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:3000
@@ -135,7 +142,7 @@ The phone and computer should be on the same Wi-Fi when using a LAN URL. Start t
 # From the repository root; allows a phone on your LAN to reach the API
 npm run dev -- --hostname 0.0.0.0
 
-# From WasteChain_Mobile, in a separate terminal
+# From apps/mobile, in a separate terminal
 npx expo start --tunnel
 ```
 
@@ -143,7 +150,7 @@ Open the project in Expo Go using the displayed development URL, or scan its QR 
 
 ## Configuration
 
-The root [`.env.example`](.env.example) shows the backend variable names. Set real credentials locally; do not paste secrets into source code or `EXPO_PUBLIC_*` values.
+The root [`.env.example`](.env.example) shows the shared backend and web variable names. Set real credentials locally; do not paste secrets into source code or `EXPO_PUBLIC_*` values.
 
 | Variable | Purpose |
 |---|---|
@@ -162,17 +169,17 @@ Web3Auth must be configured for the exact app client ID and allowed origins used
 
 ## Maps and attribution
 
-The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`WasteChain_Mobile/MAPS_SETUP.md`](WasteChain_Mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
+The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`apps/mobile/MAPS_SETUP.md`](apps/mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
 
 ## Useful commands
 
 ```bash
 npm run dev                         # Web development server
 npm run build                       # Production web build
-npx tsc --noEmit                    # Web TypeScript check
+npx tsc --noEmit -p apps/web        # Web + backend TypeScript check
 npm run db:push                     # Apply Drizzle schema changes
-cd WasteChain_Mobile && npx expo start --tunnel
-cd WasteChain_Mobile && npm run typecheck
+cd apps/mobile && npx expo start --tunnel
+cd apps/mobile && npm run typecheck
 ```
 
 ## Notes

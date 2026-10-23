@@ -16,6 +16,13 @@
 
 # next.js
 /.next/
+/.next-build/
+/apps/web/.next/
+/apps/mobile/.expo/
+/apps/mobile/node_modules/
+/apps/mobile/dist/
+/apps/mobile/web-build/
+/WasteChain_Mobile/
 /out/
 
 # production

@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "WasteCHAiN",
+    "slug": "wastechain-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "wastechain",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wastechain.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#052e16",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.wastechain.app"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo of the waste you are reporting.",
+          "cameraPermission": "Take a photo of the waste you are reporting.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow WasteCHAiN to use your location to assign the nearest collector."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    }
+  }
+}
