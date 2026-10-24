@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ArrowDown, ArrowRight, Camera, MapPin, ShieldCheck, Recycle, Coins, Users, ClipboardCheck, Truck, BarChart3, Sparkles, Leaf, Smartphone, Check, Clock3, Navigation, CircleHelp } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import MapBackground from '@/components/MapBackground'
 
 const steps = [
   { icon: Camera, title: 'Spot it. Report it.', text: 'Add a photo, choose the waste type and pin the place. A clear report gives the team something they can act on.' },
@@ -28,21 +29,36 @@ export default function MarketingLanding() {
         </nav>
       </header>
 
-      <section id="top" className="relative isolate bg-white text-[#172820]">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_82%_12%,#e8f5e9_0%,transparent_37%),linear-gradient(140deg,#fff_48%,#f6faf5)]"/>
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 pb-16 pt-14 md:grid-cols-[1.05fr_.95fr] md:px-8 md:pb-24 md:pt-20">
-          <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#198044]/15 bg-[#f1f8f2] px-4 py-2 text-[11px] font-extrabold uppercase tracking-[.14em] text-[#198044]"><Sparkles size={15}/> Community-powered cleanup coordination</div>
-            <h1 className="max-w-3xl text-5xl font-black leading-[.99] tracking-[-.055em] sm:text-6xl lg:text-7xl">See a hotspot?<br/><span className="text-[#198044]">Move it forward.</span></h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">One clear place for residents to report waste, administrators to coordinate a response, and collectors to close the loop.</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link href="/login" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#198044] px-7 font-extrabold text-white shadow-xl shadow-emerald-900/15 transition hover:-translate-y-0.5 hover:bg-[#123323]">Create your account <ArrowRight size={19}/></Link><a href="#how" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-[#123323]/15 px-7 font-bold text-[#123323] transition hover:bg-[#f1f8f2]">See the workflow <ArrowDown size={17}/></a></div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-600"><span className="flex items-center gap-2"><MapPin size={17} className="text-[#198044]"/> OpenStreetMap-powered report locations</span><span className="flex items-center gap-2"><Smartphone size={17} className="text-[#198044]"/> Web dashboard + Android app</span></div>
+      <section id="top" className="relative isolate bg-white/70 text-[#172820] overflow-hidden min-h-[85vh] flex items-center justify-center">
+        {/* Full-width Map Background with clear visibility */}
+        <MapBackground opacity={0.65} />
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center justify-center text-center px-5 pb-20 pt-16 md:px-8 md:pb-28 md:pt-24">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#198044]/25 bg-white/90 backdrop-blur-md px-5 py-2.5 text-xs font-extrabold uppercase tracking-[.14em] text-[#198044] shadow-sm">
+            <Sparkles size={16}/> Community-powered cleanup coordination
           </div>
-          <div className="relative mx-auto w-full max-w-xl"><div className="absolute -inset-4 rounded-[2.5rem] bg-emerald-100/70 blur-2xl"/><div className="relative rounded-[2rem] border border-[#e4ece4] bg-white p-4 shadow-[0_28px_80px_-30px_rgba(17,64,39,.25)] sm:p-6">
-            <div className="flex items-center justify-between pb-5"><div><p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[#198044]">A report, in context</p><p className="mt-1 text-lg font-extrabold">From hotspot to pickup</p></div><span className="rounded-full bg-[#edf7ee] px-3 py-1.5 text-[10px] font-bold text-[#198044]">One shared workflow</span></div>
-            <div className="rounded-[1.5rem] bg-[#f5f8f4] p-5 sm:p-7"><div className="flex items-start gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white text-[#198044] shadow-sm"><MapPin size={23}/></span><div className="min-w-0 flex-1"><p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pickup location</p><p className="mt-1 font-extrabold text-[#23392a]">Attached to each report</p><p className="mt-1 text-xs leading-5 text-slate-500">Residents can add a pin or nearby landmark. The collector sees it with the assigned task.</p></div></div><div className="my-5 h-px bg-[#e2eae2]"/><div className="space-y-3">{[{label:'Report submitted',done:true},{label:'Administrator review',done:true},{label:'Collector pickup',done:false}].map(({label,done},i)=><div key={label} className="flex items-center gap-3"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${done?'bg-[#198044] text-white':'border border-[#b9c8ba] bg-white text-[#758277]'}`}>{done?<Check size={15}/>:i+1}</span><span className={`text-sm font-bold ${done?'text-[#34483b]':'text-slate-500'}`}>{label}</span><span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-slate-400">{done?'Complete':'Next step'}</span></div>)}</div></div>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-[#526157] sm:text-xs"><span className="rounded-xl bg-[#f5f8f4] p-3">📸 Report</span><span className="rounded-xl bg-[#f5f8f4] p-3">✓ Review</span><span className="rounded-xl bg-[#f5f8f4] p-3">♻ Pickup</span></div>
-          </div></div>
+          <h1 className="max-w-3xl text-5xl font-black leading-[1.05] tracking-[-.055em] sm:text-6xl lg:text-7xl">
+            See a hotspot?<br/>
+            <span className="text-[#198044]">Move it forward.</span>
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg sm:text-xl leading-8 text-slate-700 font-medium">
+            One clear place for residents to report waste, administrators to coordinate a response, and collectors to close the loop in Munger district.
+          </p>
+          <div className="mt-9 flex flex-col gap-4 sm:flex-row items-center justify-center">
+            <Link href="/login" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#198044] px-8 text-base font-extrabold text-white shadow-xl shadow-emerald-900/25 transition hover:-translate-y-0.5 hover:bg-[#123323]">
+              Create your account <ArrowRight size={19}/>
+            </Link>
+            <a href="#how" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-[#123323]/20 bg-white/90 backdrop-blur-md px-8 text-base font-bold text-[#123323] transition hover:bg-[#f1f8f2]">
+              See the workflow <ArrowDown size={17}/>
+            </a>
+          </div>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-semibold text-slate-700">
+            <span className="flex items-center gap-2 bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200/80 shadow-xs">
+              <MapPin size={17} className="text-[#198044]"/> Munger District Live Map
+            </span>
+            <span className="flex items-center gap-2 bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-gray-200/80 shadow-xs">
+              <Smartphone size={17} className="text-[#198044]"/> Web dashboard + Android app
+            </span>
+          </div>
         </div>
       </section>
 

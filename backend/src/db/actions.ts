@@ -22,7 +22,11 @@ export async function createUser(email: string, name: string) {
     return user;
   } catch (error) {
     console.error("Error creating user:", error);
-    return null;
+    try {
+      return await getUserByEmail(email);
+    } catch {
+      return null;
+    }
   }
 }
 

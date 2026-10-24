@@ -45,10 +45,29 @@ function fitCurrentLocation(onLocation: (point: [number, number]) => void) {
   );
 }
 
-export function DispatchMap({ reports, users }: { reports: DispatchReport[]; users: DispatchCollector[] }) {
+export function DispatchMap({
+  reports,
+  users,
+  districtCenter,
+  districtZoom = 13,
+  districtName = "Munger District",
+}: {
+  reports: DispatchReport[];
+  users: DispatchCollector[];
+  districtCenter?: [number, number] | null;
+  districtZoom?: number;
+  districtName?: string;
+}) {
   const [customCenter, setCustomCenter] = useState<[number, number] | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(13);
+  const [zoomLevel, setZoomLevel] = useState(districtZoom);
   const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    if (districtCenter) {
+      setCustomCenter(districtCenter);
+      setZoomLevel(districtZoom);
+    }
+  }, [districtCenter, districtZoom]);
 
   useEffect(() => {
     const updateClock = () => setNow(Date.now());
@@ -73,27 +92,31 @@ export function DispatchMap({ reports, users }: { reports: DispatchReport[]; use
     : firstCollector ? [firstCollector.lastLatitude!, firstCollector.lastLongitude!] : MUNGER_BIHAR;
   const center = customCenter || defaultCenter;
 
-  const reportIcon = useMemo(() => (status: string) => L.divIcon({
-    className: "wastechain-map-marker",
-    html: `<span style="display:grid;place-items:center;width:34px;height:34px;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${status === "pending" ? "#f59e0b" : "#ea580c"};box-shadow:0 2px 8px #0005"><i style="width:8px;height:8px;border-radius:50%;background:white"></i></span>`,
-    iconSize: [34, 42], iconAnchor: [17, 38], popupAnchor: [0, -36],
-  }), []);
+  const reportIcon = useMemo(() => (status: string) => {
+    const bg = status === "pending" ? "#f59e0b" : status === "assigned" ? "#2563eb" : "#16a34a";
+    const emoji = status === "pending" ? "⚠️" : status === "assigned" ? "📦" : "✅";
+    return L.divIcon({
+      className: "wastechain-map-marker",
+      html: `<div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:${bg};border:2.5px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 4px 12px rgba(0,0,0,0.3);"><span style="transform:rotate(45deg);font-size:16px;">${emoji}</span></div>`,
+      iconSize: [36, 42], iconAnchor: [18, 38], popupAnchor: [0, -36],
+    });
+  }, []);
   const collectorIcon = useMemo(() => L.divIcon({
     className: "wastechain-map-marker",
-    html: '<span style="display:grid;place-items:center;width:34px;height:34px;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#15803d;box-shadow:0 2px 8px #0005"><i style="width:8px;height:8px;border-radius:50%;background:white"></i></span>',
-    iconSize: [34, 42], iconAnchor: [17, 38], popupAnchor: [0, -36],
+    html: '<div style="position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:#15803d;border:2.5px solid white;border-radius:50%;box-shadow:0 4px 14px rgba(21,128,61,0.5);font-size:18px;">🛵<span style="position:absolute;top:-2px;right:-2px;width:12px;height:12px;background:#22c55e;border:2px solid white;border-radius:50%;"></span></div>',
+    iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -20],
   }), []);
 
   return (
     <section className="space-y-4 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <div className="flex items-center gap-2"><span className="text-xl">🗺️</span><h2 className="text-lg font-extrabold text-gray-900">District Dispatch &amp; Live Map</h2></div>
+          <div className="flex items-center gap-2"><span className="text-xl">🗺️</span><h2 className="text-lg font-extrabold text-gray-900">{districtName} Dispatch &amp; Live Map</h2></div>
           <p className="mt-1 text-xs text-gray-500">OpenStreetMap · Live complaint pins, assigned collectors, and routes. Auto-updates every 15s.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-          <button onClick={() => fitCurrentLocation(point => { setCustomCenter(point); setZoomLevel(14); })} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1.5 text-white shadow-sm transition-all hover:bg-blue-700">My GPS</button>
-          <button onClick={() => { setCustomCenter(MUNGER_BIHAR); setZoomLevel(13); }} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-white shadow-sm transition-all hover:bg-emerald-700">Munger Center</button>
+          <button onClick={() => fitCurrentLocation(point => { setCustomCenter(point); setZoomLevel(14); })} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1.5 text-white shadow-sm transition-all hover:bg-blue-700">📍 My GPS</button>
+          <button onClick={() => { setCustomCenter(districtCenter || MUNGER_BIHAR); setZoomLevel(13); }} className="flex cursor-pointer items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-white shadow-sm transition-all hover:bg-emerald-700">🎯 District Center</button>
           <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-orange-800">{locatedReports.length} complaints</span>
           <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-green-800">{liveCollectors.length} collectors live</span>
         </div>

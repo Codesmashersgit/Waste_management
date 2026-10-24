@@ -58,16 +58,37 @@ export default function LoginPage() {
 
       if (provider) {
         const user = await web3auth.getUserInfo()
-        if (!user.email || !user.idToken) throw new Error('Sign-in did not return a verified account. Please try again.')
+        let idToken = user.idToken
+        if (!idToken) {
+          try {
+            const auth = await web3auth.authenticateUser()
+            idToken = auth?.idToken
+          } catch (e) {
+            console.warn('authenticateUser not available', e)
+          }
+        }
+
+        const email = user.email
+        if (!email && !idToken) throw new Error('Sign-in did not return a verified email. Please choose Google/social login.')
+
         const sessionResponse = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken: user.idToken })
+          body: JSON.stringify({
+            idToken: idToken || undefined,
+            email: email || undefined,
+            name: user.name || undefined,
+          })
         })
         const session = await sessionResponse.json().catch(() => ({}))
-        if (!sessionResponse.ok) throw new Error(session.message || 'Could not establish a secure session. Check the server auth configuration and try again.')
-        localStorage.setItem('userEmail', user.email)
-        localStorage.setItem('userName', user.name || '')
+        if (!sessionResponse.ok) throw new Error(session.message || 'Could not establish a secure session. Please try again.')
+
+        const finalEmail = session.email || email
+        const finalName = session.name || user.name || ''
+        if (finalEmail) {
+          localStorage.setItem('userEmail', finalEmail)
+          localStorage.setItem('userName', finalName)
+        }
         setStatus('done')
         router.replace(redirectTo)
       } else {

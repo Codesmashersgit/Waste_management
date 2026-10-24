@@ -1,7 +1,7 @@
 'use client'
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
-import { MapPin, Trash, Coins, Settings, BarChart3 } from "lucide-react"
+import { MapPin, Trash, Coins, Settings, BarChart3, Truck } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 interface SidebarProps {
@@ -13,10 +13,10 @@ export default function Sidebar({ open }: SidebarProps) {
   const { t } = useLanguage()
 
   const sidebarItems = [
-    { href: "/admin", icon: MapPin, label: "Live Map & Dispatch" },
+    { href: "/", icon: MapPin, label: "Live Map & Dispatch" },
     { href: "/admin?tab=reports", icon: Trash, label: "Complaints Register" },
-    { href: "/admin?tab=users", icon: BarChart3, label: "Collectors & Citizens" },
-    { href: "/analytics", icon: Coins, label: "Impact & Analytics" },
+    { href: "/admin?tab=fleet", icon: Truck, label: "Collector Fleet & Approvals" },
+    { href: "/admin?tab=analytics", icon: BarChart3, label: "Impact & Analytics" },
   ]
 
   return (
