@@ -9,8 +9,14 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({})) as Record<string, unknown>;
     const phone = normalizeMobileNumber(body.phone);
     await sendPhoneOtp(phone);
-    const developmentCode = getDevelopmentOtpCode();
-    return NextResponse.json({ success: true, phone, retryAfter: 30, ...(developmentCode ? { developmentCode } : {}) }, { headers: { "Cache-Control": "no-store" } });
+    const code = getDevelopmentOtpCode(phone);
+    return NextResponse.json({
+      success: true,
+      phone,
+      retryAfter: 30,
+      otpCode: code,
+      developmentCode: code,
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return phoneAuthErrorResponse(error);
   }

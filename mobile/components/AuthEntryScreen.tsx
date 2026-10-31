@@ -6,9 +6,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { MobileAuthSession } from '../utils/api';
 
+const FONT = {
+  regular: 'DMSans_500Medium',
+  medium: 'Manrope_600SemiBold',
+  semiBold: 'Manrope_700Bold',
+  bold: 'Manrope_700Bold',
+  heavy: 'Manrope_800ExtraBold',
+} as const;
+
 export function AuthEntryScreen({ mode }: { mode: 'login' | 'signup' }) {
   const { login, enterDemoMode } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const complete = async (session: MobileAuthSession) => {
     await login(session);
@@ -28,79 +36,245 @@ export function AuthEntryScreen({ mode }: { mode: 'login' | 'signup' }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={goBack} accessibilityRole="button" accessibilityLabel={t('authBack')}>
-            <Text style={styles.backArrow}>‹</Text><Text style={styles.backLabel}>{t('authBack')}</Text>
+            <View style={styles.backIconCircle}>
+              <Text style={styles.backArrow}>‹</Text>
+            </View>
+            <Text style={styles.backLabel}>{t('authBack')}</Text>
           </TouchableOpacity>
           <LanguageToggle />
         </View>
 
-        <View style={styles.illustration}>
-          <View style={styles.sun} />
-          <View style={styles.cloud}><View style={styles.cloudBump} /></View>
-          <View style={styles.avatarCircle}><Text style={styles.avatarEmoji}>{mode === 'signup' ? '👋' : '🌱'}</Text></View>
-          <View style={styles.illustrationBadge}><Text style={styles.badgeEmoji}>♻️</Text></View>
-          <View style={styles.illustrationGround} />
-        </View>
+        {/* Premium Fintech / Modern Hero Header */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
+          <View style={styles.heroBadgeRow}>
+            <View style={styles.networkBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.networkBadgeText}>
+                {mode === 'signup' 
+                  ? (language === 'hi' ? 'नया नागरिक खाता' : 'NEW RESIDENT CITIZEN') 
+                  : (language === 'hi' ? 'सुरक्षित प्रमाणीकरण' : 'SECURE PHONE PORTAL')}
+              </Text>
+            </View>
+            <View style={styles.versionBadge}>
+              <Text style={styles.versionBadgeText}>v2.4 OTP</Text>
+            </View>
+          </View>
 
-        <Text style={styles.brand}>WASTE-CHAiN</Text>
-        <Text style={styles.subtitle}>{t('authScreenIntro')}</Text>
+          <View style={styles.heroBrandRow}>
+            <View style={styles.brandIconBox}>
+              <Text style={styles.brandIcon}>{mode === 'signup' ? '🌱' : '⚡'}</Text>
+            </View>
+            <View style={styles.heroTitleBox}>
+              <Text style={styles.heroBrandTitle}>WasteCHAiN</Text>
+              <Text style={styles.heroBrandSub}>
+                {mode === 'signup' 
+                  ? (language === 'hi' ? 'सफाई में भाग लें व रिवॉर्ड पाएँ' : 'Citizen Eco-Logistics Network')
+                  : (language === 'hi' ? 'मोबाइल नंबर से तुरंत लॉगिन करें' : 'One-Tap Verified Mobile Sign-in')}
+              </Text>
+            </View>
+          </View>
 
-        <View style={styles.benefitCard}>
-          <View style={styles.benefitIcon}><Text style={styles.benefitEmoji}>🔐</Text></View>
-          <View style={styles.benefitCopy}>
-            <Text style={styles.benefitTitle}>{t('authSecureNote')}</Text>
-            <Text style={styles.benefitText}>{t('landingSubtitle')}</Text>
+          {/* Feature Badges Bar */}
+          <View style={styles.pillRow}>
+            <View style={styles.microPill}>
+              <Text style={styles.microPillIcon}>💬</Text>
+              <Text style={styles.microPillText}>{language === 'hi' ? 'तुरंत SMS OTP' : 'Instant SMS'}</Text>
+            </View>
+            <View style={styles.microPill}>
+              <Text style={styles.microPillIcon}>📍</Text>
+              <Text style={styles.microPillText}>{language === 'hi' ? 'GPS टैग्ड' : 'GPS Verified'}</Text>
+            </View>
+            <View style={styles.microPill}>
+              <Text style={styles.microPillIcon}>🪙</Text>
+              <Text style={styles.microPillText}>{language === 'hi' ? 'इको टोकन' : 'Eco Points'}</Text>
+            </View>
           </View>
         </View>
 
-        <PhoneAuthForm mode={mode} onComplete={complete} />
+        {/* Phone OTP Verification Form */}
+        <View style={styles.formContainer}>
+          <PhoneAuthForm mode={mode} onComplete={complete} />
+        </View>
 
-        {__DEV__ && mode === 'login' ? <View style={styles.demoSection}>
-          <TouchableOpacity style={styles.demoButton} onPress={() => void openDemoDashboard()} accessibilityRole="button">
-            <Text style={styles.demoButtonText}>{t('demoDashboard')}</Text>
-          </TouchableOpacity>
-          <Text style={styles.demoHint}>{t('demoDashboardHint')}</Text>
-        </View> : null}
+        {__DEV__ && mode === 'login' ? (
+          <View style={styles.demoSection}>
+            <TouchableOpacity style={styles.demoButton} onPress={() => void openDemoDashboard()} accessibilityRole="button">
+              <Text style={styles.demoButtonText}>{t('demoDashboard')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.demoHint}>{t('demoDashboardHint')}</Text>
+          </View>
+        ) : null}
 
         <TouchableOpacity style={styles.switchButton} onPress={switchMode} accessibilityRole="button">
           <Text style={styles.switchPrompt}>{t(mode === 'login' ? 'authCreatePrompt' : 'authLoginPrompt')} </Text>
           <Text style={styles.switchLink}>{t(mode === 'login' ? 'authCreate' : 'authLoginLink')}</Text>
         </TouchableOpacity>
-        <Text style={styles.footnote}>{t('landingFooter')}</Text>
+
+        <Text style={styles.footnote}>
+          {language === 'hi' 
+            ? 'गोपनीयता सुरक्षित · OTP कोड किसी के साथ साझा न करें' 
+            : 'End-to-End Encrypted · Do not share your OTP with anyone'}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f8fcf8' },
-  content: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 22, justifyContent: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  backButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 5 },
-  backArrow: { color: '#274333', fontSize: 31, lineHeight: 33 },
-  backLabel: { color: '#526258', fontSize: 12, fontWeight: '800' },
-  illustration: { height: 138, borderRadius: 27, backgroundColor: '#e8f7eb', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: '#d5eedb', marginBottom: 16 },
-  sun: { position: 'absolute', width: 54, height: 54, borderRadius: 27, backgroundColor: '#ffcf67', top: 16, right: 23 },
-  cloud: { position: 'absolute', left: 34, top: 38, width: 57, height: 15, borderRadius: 10, backgroundColor: '#fff' },
-  cloudBump: { position: 'absolute', width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', top: -10, left: 15 },
-  avatarCircle: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: '#cfebd4', zIndex: 1 },
-  avatarEmoji: { fontSize: 57 },
-  illustrationBadge: { position: 'absolute', zIndex: 2, bottom: 22, right: '27%', width: 38, height: 38, borderRadius: 14, backgroundColor: '#188642', borderWidth: 3, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  badgeEmoji: { fontSize: 20 },
-  illustrationGround: { position: 'absolute', left: -15, right: -15, bottom: -30, height: 63, borderRadius: 60, backgroundColor: '#80cd8a' },
-  brand: { color: '#188642', fontSize: 11, fontWeight: '900', textAlign: 'center', letterSpacing: 1.8 },
-  subtitle: { color: '#66746a', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 5, marginBottom: 13 },
-  benefitCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 11, borderRadius: 17, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e4ede5', marginBottom: 16 },
-  benefitIcon: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#e9f8ec' },
-  benefitEmoji: { fontSize: 20 },
-  benefitCopy: { flex: 1, gap: 2 },
-  benefitTitle: { color: '#284432', fontSize: 12, fontWeight: '900' },
-  benefitText: { color: '#718077', fontSize: 10, lineHeight: 15 },
-  switchButton: { minHeight: 48, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  switchPrompt: { color: '#758179', fontSize: 12, fontWeight: '600' },
-  switchLink: { color: '#147b38', fontSize: 12, fontWeight: '900' },
-  footnote: { color: '#929d95', fontSize: 10, textAlign: 'center' },
-  demoSection: { marginTop: 4, marginBottom: 4 },
-  demoButton: { minHeight: 48, borderRadius: 15, backgroundColor: '#102A28', alignItems: 'center', justifyContent: 'center' },
-  demoButtonText: { color: '#C9F06A', fontSize: 14, fontFamily: 'Manrope_800ExtraBold' },
-  demoHint: { color: '#728078', fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 5 },
+  safe: { flex: 1, backgroundColor: '#0C1E1B' },
+  content: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  backButton: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  backIconCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  backArrow: { color: '#E8F5E9', fontSize: 24, lineHeight: 26, marginTop: -2 },
+  backLabel: { color: '#A5C4B5', fontSize: 13, fontFamily: FONT.bold },
+
+  heroCard: {
+    backgroundColor: '#132C27',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#1E493F',
+    marginBottom: 20,
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(201, 240, 106, 0.08)',
+  },
+  heroBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  networkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(201, 240, 106, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 240, 106, 0.25)',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#C9F06A',
+  },
+  networkBadgeText: {
+    color: '#C9F06A',
+    fontSize: 11,
+    fontFamily: FONT.heavy,
+    letterSpacing: 0.5,
+  },
+  versionBadge: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  versionBadgeText: {
+    color: '#8CA699',
+    fontSize: 10,
+    fontFamily: FONT.bold,
+  },
+  heroBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 18,
+  },
+  brandIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: '#1E493F',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2F6E5E',
+  },
+  brandIcon: {
+    fontSize: 26,
+  },
+  heroTitleBox: {
+    flex: 1,
+  },
+  heroBrandTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontFamily: FONT.heavy,
+    letterSpacing: -0.3,
+  },
+  heroBrandSub: {
+    color: '#A5C4B5',
+    fontSize: 13,
+    marginTop: 2,
+    fontFamily: FONT.medium,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 14,
+  },
+  microPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: 7,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+  },
+  microPillIcon: {
+    fontSize: 11,
+  },
+  microPillText: {
+    color: '#D4E8DC',
+    fontSize: 11,
+    fontFamily: FONT.bold,
+  },
+
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+    marginBottom: 18,
+  },
+
+  switchButton: { minHeight: 46, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  switchPrompt: { color: '#8EA498', fontSize: 13, fontFamily: FONT.medium },
+  switchLink: { color: '#C9F06A', fontSize: 13, fontFamily: FONT.heavy },
+  footnote: { color: '#5A7569', fontSize: 11, textAlign: 'center', marginTop: 8, fontFamily: FONT.medium },
+  demoSection: { marginTop: 4, marginBottom: 8 },
+  demoButton: { minHeight: 46, borderRadius: 14, backgroundColor: '#1E493F', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#2E6E5F' },
+  demoButtonText: { color: '#C9F06A', fontSize: 13, fontFamily: FONT.bold },
+  demoHint: { color: '#7E978B', fontSize: 10, lineHeight: 14, textAlign: 'center', marginTop: 5 },
 });

@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useFonts, DMSans_400Regular, DMSans_500Medium, DMSans_600SemiBold } from '@expo-google-fonts/dm-sans';
 import { Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope';
+import { Mukta_400Regular, Mukta_500Medium, Mukta_600SemiBold, Mukta_700Bold, Mukta_800ExtraBold } from '@expo-google-fonts/mukta';
 import { MaterialSymbols_400Regular } from '@expo-google-fonts/material-symbols';
 import { AuthProvider } from '../contexts/AuthContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
@@ -17,6 +18,11 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    Mukta_400Regular,
+    Mukta_500Medium,
+    Mukta_600SemiBold,
+    Mukta_700Bold,
+    Mukta_800ExtraBold,
     MaterialSymbols_400Regular,
   });
 

@@ -125,7 +125,7 @@ export const api = {
     ]);
   },
   requestOtp: async (phone: string) => {
-    const result = await request<{ success: boolean; phone: string; retryAfter: number; developmentCode?: string }>('/api/mobile/auth/request-otp', {
+    const result = await request<{ success: boolean; phone: string; retryAfter: number; developmentCode?: string; otpCode?: string }>('/api/mobile/auth/request-otp', {
       method: 'POST', body: JSON.stringify({ phone }),
     });
     if (!result) throw new Error('Account service is not configured.');

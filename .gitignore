@@ -17,6 +17,8 @@
 # next.js
 /.next/
 /.next-build/
+/frontend/.next/
+/frontend/node_modules/
 /web/.next/
 /web/node_modules/
 /backend/node_modules/

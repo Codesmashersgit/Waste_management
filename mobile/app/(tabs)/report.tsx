@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LanguageToggle } from '../../components/LanguageToggle';
 import { useLanguage, type MessageKey } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { api, type WasteReport, type WasteVerification } from '../../utils/api';
 
 const INK = '#102A28';
@@ -16,7 +17,7 @@ const LIME = '#C9F06A';
 const SOFT = '#F3F5F2';
 const LINE = '#E5E9E5';
 const MUTED = '#6E7B76';
-const FONT = { regular: 'DMSans_400Regular', medium: 'DMSans_500Medium', bold: 'Manrope_700Bold', heavy: 'Manrope_800ExtraBold' } as const;
+const FONT = { regular: 'DMSans_500Medium', medium: 'Manrope_600SemiBold', bold: 'Manrope_700Bold', heavy: 'Manrope_800ExtraBold' } as const;
 
 const wasteOptions: { value: string; key: MessageKey; icon: string; tint: string }[] = [
   { value: 'Plastic', key: 'plastic', icon: 'water_bottle', tint: '#E2F5E8' },
@@ -32,6 +33,7 @@ type FlowStep = 'photo' | 'materials' | 'result' | 'location' | 'success';
 
 export default function ReportScreen() {
   const { t, language } = useLanguage();
+  const { userId, userName, userPhone, isDemo, isLoading } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<FlowStep>('photo');
   const [photo, setPhoto] = useState<WastePhoto | null>(null);
@@ -74,11 +76,6 @@ export default function ReportScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.72, base64: true });
-    pickPhoto(result);
-  };
-
-  const choosePhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.72, base64: true });
     pickPhoto(result);
   };
 
@@ -201,6 +198,51 @@ export default function ReportScreen() {
     setSubmittedReport(null);
   };
 
+  if (!isLoading && userId == null && !isDemo) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.safeDark]} edges={['top']}>
+        <StatusBar style="light" />
+        <View style={styles.authGateWrapper}>
+          <View style={styles.authGateCard}>
+            <View style={styles.authGateIconCircle}>
+              <Text style={styles.authGateIcon}>📱</Text>
+            </View>
+            <View style={styles.authGateTag}>
+              <Text style={styles.authGateTagText}>
+                {language === 'hi' ? 'सत्यापन आवश्यक है' : 'PHONE VERIFICATION REQUIRED'}
+              </Text>
+            </View>
+            <Text style={styles.authGateTitle}>
+              {language === 'hi' ? 'रिपोर्ट के लिए मोबाइल सत्यापित करें' : 'Verify Mobile to Report Waste'}
+            </Text>
+            <Text style={styles.authGateDesc}>
+              {language === 'hi' 
+                ? 'कचरे की सटीक रिपोर्टिंग और इको-टोकन रिवॉर्ड्स के लिए आपके मोबाइल नंबर पर OTP कोड भेजा जाएगा।' 
+                : 'To prevent spam reports and credit your wallet with Eco Tokens, please authenticate with your mobile number.'}
+            </Text>
+            <TouchableOpacity 
+              style={styles.authGateButton} 
+              onPress={() => router.replace('/login')}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.authGateButtonText}>
+                {language === 'hi' ? 'मोबाइल OTP से लॉगिन करें →' : 'Continue with Phone OTP →'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.authGateBack} 
+              onPress={() => router.replace('/')}
+            >
+              <Text style={styles.authGateBackText}>
+                {language === 'hi' ? '‹ मुख्य पृष्ठ पर वापस जाएं' : '‹ Return to Welcome Page'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.safe, step === 'photo' && styles.safeDark]} edges={['top']}>
       <StatusBar style={step === 'photo' ? 'light' : 'dark'} />
@@ -234,7 +276,21 @@ export default function ReportScreen() {
                 <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress * 100}%` }]} /></View>
                 <Text style={[styles.progressLabel, step === 'photo' && styles.lightMuted]}>{String(stepNumber).padStart(2, '0')} / 04</Text>
               </View>
-              {step === 'photo' ? <View style={styles.photoIntro}><Text style={styles.photoIntroEyebrow}>{t('reportStepPhoto').toUpperCase()}</Text><Text style={styles.photoIntroTitle}>{t('photoFirstTitle')}</Text><Text style={styles.photoIntroText}>{t('photoFirstDesc')}</Text></View> : null}
+              {step === 'photo' ? (
+                <View style={styles.photoIntro}>
+                  <View style={styles.verifiedCitizenPill}>
+                    <View style={styles.verifiedDot} />
+                    <Text style={styles.verifiedCitizenText}>
+                      {language === 'hi'
+                        ? `सत्यापित नागरिक: ${userName || userPhone || 'उपयोगकर्ता'}`
+                        : `Verified Citizen: ${userName || userPhone || 'Active Citizen'}`}
+                    </Text>
+                  </View>
+                  <Text style={styles.photoIntroEyebrow}>{t('reportStepPhoto').toUpperCase()}</Text>
+                  <Text style={styles.photoIntroTitle}>{t('photoFirstTitle')}</Text>
+                  <Text style={styles.photoIntroText}>{t('photoFirstDesc')}</Text>
+                </View>
+              ) : null}
             </View>
 
             {step === 'photo' ? (
@@ -242,19 +298,48 @@ export default function ReportScreen() {
                 <View style={styles.cameraIllustration}>
                   <View style={styles.illustrationHalo} />
                   <View style={styles.cameraIconBox}><Text style={styles.cameraIcon}>photo_camera</Text></View>
-                  <View style={styles.photoTips}><Text style={styles.tipDot}>●</Text><Text style={styles.photoTipText}>{t('photoUploadHint')}</Text></View>
+                  <View style={styles.photoTips}>
+                    <Text style={styles.tipDot}>●</Text>
+                    <Text style={styles.photoTipText}>
+                      {language === 'hi' 
+                        ? 'केवल लाइव कैमरा मान्य · गैलरी अपलोड बंद है' 
+                        : 'Live Camera Capture Only · Gallery uploads disabled'}
+                    </Text>
+                  </View>
                 </View>
                 <View style={styles.primaryActions}>
-                  <PrimaryButton label={t('camera')} icon="photo_camera" iconFont onPress={() => void takePhoto()} />
-                  <TouchableOpacity style={styles.galleryButton} onPress={() => void choosePhoto()} accessibilityRole="button"><Text style={styles.galleryIcon}>photo_library</Text><Text style={styles.galleryLabel}>{t('gallery')}</Text></TouchableOpacity>
+                  <PrimaryButton 
+                    label={language === 'hi' ? 'लाइव कैमरा से फोटो लें' : 'Open Live Camera & Scan'} 
+                    icon="photo_camera" 
+                    iconFont 
+                    onPress={() => void takePhoto()} 
+                  />
                 </View>
-                <View style={styles.privacyNote}><Text style={styles.privacyIcon}>✓</Text><Text style={styles.privacyText}>{t('photoPrivacyHint')}</Text></View>
+                <View style={styles.privacyNote}>
+                  <Text style={styles.privacyIcon}>🔒</Text>
+                  <Text style={styles.privacyText}>
+                    {language === 'hi' 
+                      ? 'फर्जी रिपोर्ट रोकने के लिए केवल मौके से लाइव कैमरा फोटो मान्य है।' 
+                      : 'Live on-site camera verification required to verify real waste location.'}
+                  </Text>
+                </View>
               </View>
             ) : null}
 
             {step === 'materials' ? (
               <View style={styles.pageBody}>
-                {photo ? <View style={styles.photoFrame}><Image source={{ uri: photo.uri }} style={styles.photoPreview} accessibilityLabel={t('addPhoto')} /><View style={styles.photoReadyBadge}><Text style={styles.photoReadyCheck}>✓</Text><Text style={styles.photoReadyText}>{t('photoReady')}</Text></View><TouchableOpacity style={styles.retakeButton} onPress={() => setStep('photo')} accessibilityRole="button"><Text style={styles.retakeText}>↻  {t('retakePhoto')}</Text></TouchableOpacity></View> : null}
+                {photo ? (
+                  <View style={styles.photoFrame}>
+                    <Image source={{ uri: photo.uri }} style={styles.photoPreview} accessibilityLabel={t('addPhoto')} />
+                    <View style={styles.photoReadyBadge}>
+                      <Text style={styles.photoReadyCheck}>✓</Text>
+                      <Text style={styles.photoReadyText}>{t('photoReady')}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.retakeButton} onPress={() => void takePhoto()} accessibilityRole="button">
+                      <Text style={styles.retakeText}>↻  {language === 'hi' ? 'कैमरा से दोबारा लें' : 'Retake with Camera'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
                 <SectionHeading eyebrow={t('reportStepMaterials')} title={t('selectMaterialsTitle')} detail={t('selectMaterialsHint')} />
                 <View style={styles.typeGrid}>
                   {wasteOptions.map(option => {
@@ -372,10 +457,7 @@ const styles = StyleSheet.create({
   primaryButtonLabel: { color: '#FFFFFF', fontFamily: FONT.bold, fontSize: 15, flex: 1, textAlign: 'center', paddingLeft: 22 },
   primaryButtonIcon: { color: LIME, fontFamily: FONT.bold, fontSize: 21, minWidth: 22, textAlign: 'right' },
   disabledButton: { opacity: 0.5 },
-  galleryButton: { minHeight: 52, borderRadius: 17, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: LINE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
-  galleryIcon: { fontSize: 21, lineHeight: 26, color: GREEN, fontFamily: 'MaterialSymbols_400Regular' },
-  galleryLabel: { color: INK, fontFamily: FONT.bold, fontSize: 14 },
-  privacyNote: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 5, marginTop: 2 },
+  privacyNote: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 5, marginTop: 4, backgroundColor: '#F4F7F4', padding: 12, borderRadius: 14, borderWidth: 1, borderColor: LINE },
   privacyIcon: { color: GREEN_BRIGHT, fontFamily: FONT.bold, fontSize: 15 },
   privacyText: { flex: 1, color: MUTED, fontFamily: FONT.regular, fontSize: 11, lineHeight: 16 },
   photoFrame: { borderRadius: 23, overflow: 'hidden', height: 235, backgroundColor: SOFT, position: 'relative' },
@@ -475,4 +557,19 @@ const styles = StyleSheet.create({
   reportIdIcon: { color: LIME, fontSize: 30 },
   secondaryAction: { minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 5 },
   secondaryActionText: { color: GREEN, fontFamily: FONT.bold, fontSize: 13 },
+  authGateWrapper: { flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' },
+  authGateCard: { width: '100%', backgroundColor: '#132C27', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#1E493F', alignItems: 'center' },
+  authGateIconCircle: { width: 64, height: 64, borderRadius: 24, backgroundColor: '#1E493F', alignItems: 'center', justifyContent: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#2E6E5F' },
+  authGateIcon: { fontSize: 32 },
+  authGateTag: { backgroundColor: 'rgba(201, 240, 106, 0.15)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(201, 240, 106, 0.3)' },
+  authGateTagText: { color: LIME, fontSize: 10, fontFamily: FONT.bold, letterSpacing: 0.6 },
+  authGateTitle: { color: '#FFFFFF', fontSize: 20, fontFamily: FONT.bold, textAlign: 'center', lineHeight: 28, marginBottom: 10 },
+  authGateDesc: { color: '#AFC1BA', fontSize: 13, fontFamily: FONT.regular, textAlign: 'center', lineHeight: 20, marginBottom: 22 },
+  authGateButton: { width: '100%', minHeight: 52, borderRadius: 16, backgroundColor: GREEN_BRIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  authGateButtonText: { color: '#FFFFFF', fontFamily: FONT.bold, fontSize: 15 },
+  authGateBack: { paddingVertical: 8 },
+  authGateBackText: { color: '#8FA69A', fontFamily: FONT.medium, fontSize: 13 },
+  verifiedCitizenPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: 'rgba(201, 240, 106, 0.12)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(201, 240, 106, 0.25)', marginBottom: 12 },
+  verifiedDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: LIME },
+  verifiedCitizenText: { color: LIME, fontSize: 11, fontFamily: FONT.bold },
 });
