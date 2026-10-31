@@ -7,6 +7,14 @@ dotenv.config({ path: path.resolve(process.cwd(), "../backend/.env") });
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  webpack: (config) => {
+    config.resolve.modules = [
+      path.resolve(process.cwd(), "node_modules"),
+      "node_modules",
+      ...(config.resolve.modules || []),
+    ];
+    return config;
+  },
 };
 
 export default nextConfig;

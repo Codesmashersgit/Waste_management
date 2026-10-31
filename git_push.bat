@@ -1,14 +1,14 @@
 @echo off
 title Git Push WasteCHAiN
 echo ========================================================
-echo   Adding changes, committing and pushing to Git...
+echo   Adding fixes, committing and pushing to Git...
 echo ========================================================
 
-git add -A
-git commit -m "feat: upgrade mobile to Expo SDK 58, premium typography, Fast2SMS auth, live camera reporting"
+git add web/package.json web/next.config.ts .gitignore
+git commit -m "fix(vercel): resolve drizzle-orm and neon packages for backend imports during build"
 git push
 
 echo.
 echo ========================================================
-echo   Git push process finished!
+echo   Pushed successfully! Vercel redeploying now...
 echo ========================================================
