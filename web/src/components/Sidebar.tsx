@@ -1,7 +1,7 @@
 'use client'
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
-import { MapPin, Trash, Coins, Settings, BarChart3, Truck } from "lucide-react"
+import { MapPin, Trash, Settings, BarChart3, Truck } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 interface SidebarProps {

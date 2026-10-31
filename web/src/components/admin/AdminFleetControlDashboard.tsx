@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import {
-  Users, Truck, MapPin, Search, Filter, ShieldCheck, CheckCircle,
-  Clock, AlertTriangle, Eye, X, RefreshCw, ChevronRight, Award,
-  TrendingUp, Leaf, Coins, Check, ArrowRight, Phone, Mail, Navigation,
-  Calendar, Layers, Sparkles, AlertCircle, Globe, Compass, Lock,
-  KeyRound, UserCheck, ShieldAlert
+  Truck, MapPin, Search, ShieldCheck, CheckCircle,
+  Eye, X, RefreshCw,
+  TrendingUp, Leaf, Coins, Check, Phone, Mail, Navigation,
+  Layers, AlertCircle, Compass, Lock,
+  ShieldAlert
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 

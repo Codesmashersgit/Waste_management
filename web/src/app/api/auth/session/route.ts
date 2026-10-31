@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHmac } from 'node:crypto';
-import { createRemoteJWKSet, decodeJwt, decodeProtectedHeader, jwtVerify, type JWTPayload } from 'jose';
+import { createRemoteJWKSet, decodeJwt, jwtVerify, type JWTPayload } from 'jose';
 import { createUser } from '@backend/db/actions';
 
 const COOKIE_NAME = 'wastechain_session';
