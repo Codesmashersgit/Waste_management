@@ -1,11 +1,12 @@
 'use client'
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Leaf, Loader, ArrowRight } from 'lucide-react'
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID || 'BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const requestedRedirect = searchParams.get('redirect') || '/'
@@ -180,5 +181,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 bg-black" />}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

@@ -6,9 +6,6 @@
   <img src="web/public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
 </p>
 
-<p align="center">
-  <a href="#screenshots">Screenshots</a> · <a href="#features">Features</a> · <a href="#run-locally">Run locally</a> · <a href="#mobile-app-setup">Mobile app</a> · <a href="#configuration">Configuration</a>
-</p>
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo) ![TypeScript](https://img.shields.io/badge/TypeScript-5%20%2B%206-3178C6?logo=typescript) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Maps](https://img.shields.io/badge/Maps-OpenStreetMap-7EBC6F?logo=openstreetmap)
 
