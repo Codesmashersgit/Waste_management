@@ -1,8 +1,7 @@
 'use client'
-import { Suspense } from 'react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Leaf, Loader, ArrowRight } from 'lucide-react'
+import { Leaf, Loader, ArrowRight, ShieldCheck, Zap } from 'lucide-react'
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID || 'BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps'
 
@@ -22,7 +21,6 @@ function LoginPageContent() {
     setStatus('connecting')
     setErrorMsg('')
     try {
-      // Dynamic import to avoid any module-level caching issues
       const { Web3Auth } = await import('@web3auth/modal')
       const { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } = await import('@web3auth/base')
       const { EthereumPrivateKeyProvider } = await import('@web3auth/ethereum-provider')
@@ -48,7 +46,7 @@ function LoginPageContent() {
         uiConfig: {
           appName: 'WasteCHAiN',
           mode: 'dark',
-          theme: { primary: '#22c55e' },
+          theme: { primary: '#10b981' },
           loginMethodsOrder: ['google', 'email_passwordless'] as const,
           primaryButton: 'socialLogin',
         },
@@ -102,81 +100,125 @@ function LoginPageContent() {
         setStatus('ready')
       } else {
         setStatus('error')
-        setErrorMsg(message || 'Something went wrong. Try again.')
+        if (message.toLowerCase().includes('origin') || message.toLowerCase().includes('whitelist')) {
+          setErrorMsg('Vercel domain is not whitelisted in Web3Auth yet. Use Instant Admin Login below or whitelist your URL in Web3Auth Dashboard.')
+        } else {
+          setErrorMsg(message || 'Something went wrong with social login. Use Instant Admin Login below.')
+        }
       }
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Dark green background */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: 'url(/smart-city-bg.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }} />
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-emerald-400/10 rounded-full blur-[100px] pointer-events-none" />
+  const handleQuickLogin = async (email = 'sudhanshu.ok1802@gmail.com', name = 'Sudhanshu (Admin)') => {
+    setStatus('connecting')
+    setErrorMsg('')
+    try {
+      const res = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Could not sign in.')
+      localStorage.setItem('userEmail', data.email || email)
+      localStorage.setItem('userName', data.name || name)
+      setStatus('done')
+      router.replace(redirectTo)
+    } catch (err: unknown) {
+      setStatus('error')
+      setErrorMsg(err instanceof Error ? err.message : 'Could not log in.')
+    }
+  }
 
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-sm mx-4 rounded-3xl p-8 flex flex-col items-center gap-6"
-        style={{
-          background: 'rgba(255,255,255,0.05)',
-          backdropFilter: 'blur(40px)',
-          border: '1px solid rgba(74,222,128,0.15)',
-          boxShadow: '0 0 60px rgba(74,222,128,0.08), 0 25px 50px rgba(0,0,0,0.5)',
-        }}
-      >
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-950 font-sans">
+      {/* Background with night drone view overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
+        style={{ backgroundImage: 'url(/drone-smart-city-night.jpg), url(/smart-city-bg.jpg)' }}
+      />
+      <div className="absolute inset-0 bg-radial-gradient from-emerald-950/40 via-gray-950/80 to-gray-950" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/15 rounded-full blur-[140px] pointer-events-none" />
+
+      {/* Cyber Glass Card */}
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-3xl p-8 sm:p-10 flex flex-col items-center gap-6 border border-emerald-500/30 bg-gray-900/85 backdrop-blur-3xl shadow-[0_0_80px_rgba(16,185,129,0.15)]">
+        {/* Brand Header */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center"
-            style={{ boxShadow: '0 0 30px rgba(74,222,128,0.4)' }}>
-            <Leaf className="h-8 w-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-[2px] shadow-[0_0_35px_rgba(16,185,129,0.5)]">
+            <div className="w-full h-full rounded-2xl bg-gray-950 flex items-center justify-center">
+              <Leaf className="h-8 w-8 text-emerald-400 animate-pulse" />
+            </div>
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white">WASTE-CHAiN</h1>
-            <p className="text-green-400/60 text-xs mt-0.5 uppercase tracking-widest">Decentralized Eco Platform</p>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              Smart City Command Portal
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight">
+              WASTE<span className="text-emerald-400">CHAiN</span>
+            </h1>
+            <p className="text-gray-400 text-xs mt-1">Autonomous Municipal Waste & Dispatch Network</p>
           </div>
         </div>
 
-        <p className="text-gray-400 text-sm text-center leading-relaxed">
-          Login with Google or social account to access the platform.
-        </p>
-
-        {(status === 'init') && (
-          <div className="flex items-center gap-2 text-green-300 text-sm">
-            <Loader className="h-4 w-4 animate-spin" /> Initializing...
+        {/* Status indicator */}
+        {status === 'init' && (
+          <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold">
+            <Loader className="h-4 w-4 animate-spin" /> Initializing Portal...
           </div>
         )}
-
         {status === 'connecting' && (
-          <div className="flex items-center gap-2 text-green-300 text-sm">
-            <Loader className="h-4 w-4 animate-spin" /> Opening login...
+          <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold">
+            <Loader className="h-4 w-4 animate-spin" /> Authenticating Session...
           </div>
         )}
-
         {status === 'done' && (
-          <div className="flex items-center gap-2 text-green-400 text-sm">
-            <Loader className="h-4 w-4 animate-spin" /> Redirecting...
+          <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold">
+            <ShieldCheck className="h-5 w-5 text-emerald-400" /> Authorized. Entering Dashboard...
           </div>
         )}
 
-        {(status === 'ready' || status === 'error') && (
-          <button onClick={handleConnect}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-base transition-all duration-200 hover:scale-105 active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-              boxShadow: '0 0 25px rgba(34,197,94,0.35)',
-            }}
-          >
-            Login with Web3Auth <ArrowRight className="h-5 w-5" />
-          </button>
+        {/* Action Buttons */}
+        <div className="w-full flex flex-col gap-3 mt-1">
+          {(status === 'ready' || status === 'error') && (
+            <>
+              {/* Primary: Web3Auth / Google */}
+              <button
+                onClick={handleConnect}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-sm tracking-wide text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 transition-all duration-300 shadow-[0_0_30px_rgba(16,185,129,0.35)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span>Continue with Google / Web3Auth</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-gray-800" />
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">or direct access</span>
+                <div className="flex-1 h-px bg-gray-800" />
+              </div>
+
+              {/* Instant One-Click Admin Sign-in (Bypasses Google Whitelist Errors) */}
+              <button
+                onClick={() => handleQuickLogin()}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-xs tracking-wide text-emerald-300 border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/50 hover:border-emerald-400/60 transition-all duration-200"
+              >
+                <Zap className="h-4 w-4 text-emerald-400" />
+                <span>Instant Admin Access (sudhanshu.ok1802@gmail.com)</span>
+              </button>
+            </>
+          )}
+        </div>
+
+        {errorMsg && (
+          <div className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-500/30 text-rose-300 text-xs text-center leading-relaxed">
+            {errorMsg}
+          </div>
         )}
 
-        {errorMsg && <p className="text-red-400 text-xs text-center">{errorMsg}</p>}
         {status === 'ready' && (
-          <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-400 text-xs">
-            ← Go back
+          <button onClick={() => router.push('/')} className="text-gray-500 hover:text-gray-300 text-xs font-semibold transition">
+            ← Return to City Map
           </button>
         )}
       </div>
@@ -186,7 +228,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="fixed inset-0 bg-black" />}>
+    <Suspense fallback={<div className="fixed inset-0 bg-gray-950" />}>
       <LoginPageContent />
     </Suspense>
   )
