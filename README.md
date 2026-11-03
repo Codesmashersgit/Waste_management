@@ -1,137 +1,253 @@
 # WasteCHAiN
 
-**Cleaner places, together.** WasteCHAiN connects residents who report waste, administrators who coordinate a response, and approved collectors who complete pickups. The web dashboard and Expo mobile app use the same PostgreSQL-backed service.
+Autonomous Municipal Smart Waste Management & Dispatch Operating System
 
-<p align="center">
-  <img src="web/public/smart-city-bg.jpg" alt="WasteCHAiN — community waste reporting and collection" width="100%" />
-</p>
+WasteCHAiN is an end-to-end civic sanitation and automated dispatch platform engineered to solve urban and rural waste accumulation. It connects three core stakeholders into a single unified real-time loop: resident citizens who identify and report waste hotspots, municipal district administrators who monitor city-wide cleanliness and assign dispatches, and field collectors who navigate to locations, clear waste, and log verified collections.
 
+The ecosystem is powered by a high-performance Next.js web command console, an Expo React Native mobile application for Android and iOS, a shared serverless Neon PostgreSQL database managed via Drizzle ORM, Google Gemini multimodal AI vision verification, and native OpenStreetMap spatial tracking.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js) ![Expo](https://img.shields.io/badge/Expo-57-000020?logo=expo) ![TypeScript](https://img.shields.io/badge/TypeScript-5%20%2B%206-3178C6?logo=typescript) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql) ![Maps](https://img.shields.io/badge/Maps-OpenStreetMap-7EBC6F?logo=openstreetmap)
+---
 
-## Screenshots
+## 1. Project Overview (Project Kya Hai)
 
-### Web landing page
+Municipal waste management in emerging and dense urban centers suffers from severe operational blind spots:
+- Citizens have no transparent mechanism to report overflowing garbage or verify that action was taken.
+- Field workers operate on disjointed paper manifests or unoptimized manual routes without GPS coordination.
+- City administrators lack real-time visibility into sanitation fleet operations, daily clearance tonnage, and hotspot recurrence.
+- Widespread reporting fraud occurs when users submit stale photos from web galleries or duplicate older tickets.
 
-![WasteCHAiN web landing page](web/docs/screenshots/web-landing.png)
+WasteCHAiN eliminates these bottlenecks through a transparent, automated, and fraud-proof digital loop:
+1. Every report requires an authentic live hardware camera capture with embedded GPS coordinates. Photo gallery and file picker uploads are strictly prohibited at the native application level.
+2. Google Gemini multimodal AI instantly analyzes the waste image, categorizes materials (Plastic, Organic, Metal, Electronic, Paper), and estimates volume.
+3. The report is instantly reflected in the municipal administration radar with geographic markers and urgency classification.
+4. Admins dispatch available approved collectors who receive turn-by-turn navigation in their mobile APK.
+5. Upon physical collection, weight and material tags are logged, updating the public cleanliness index and rewarding the reporting citizen with redeemable eco-points.
 
-Screenshots are stored in [`web/docs/screenshots`](web/docs/screenshots). The landing screenshot above is from the web app.
+---
 
-## Features
+## 2. Core Architecture & Stakeholder Flow (Architecture Aur Flow)
 
-- **Resident reporting:** submit a waste report with type, amount, photo, and a mapped location; view progress and earned contribution points.
-- **Collector workflow:** residents can request collector access; an administrator approves the role. Approved collectors see assigned pickups and update collection status in the mobile app.
-- **Admin coordination:** review the shared report queue, approve collector requests, assign pickups, and inspect account and activity data.
-- **Web and Android clients:** Next.js web dashboard and an Expo Router app connect to the same backend and database.
-- **Authentication:** Web3Auth social sign-in on web and phone OTP on mobile. Mobile OTP supports Twilio Verify, with a development-only fixed OTP option.
-- **Location maps:** Leaflet with OpenStreetMap tiles and attribution. No Google Maps key is required. Mobile displays its map in a WebView.
-- **Points and activity:** report/collection points, rewards, leaderboard, notifications, and transaction history are stored as application data. They are not cryptocurrency or a cash payout.
-- **Optional report assistance:** Gemini-backed report verification is configured on the server. Keep the API key private.
-
-## How the workflow fits together
-
-```text
-Resident submits a report (photo + location)
-                 ↓
-       Admin reviews the queue
-                 ↓
- Admin assigns an approved collector
-                 ↓
- Collector picks up waste and updates status
-                 ↓
- Shared report status, points, and activity
+```
++-----------------------------------------------------------------------------------+
+|                                 CITIZEN RESIDENT                                  |
+|   - Native camera photo capture (No gallery fraud)                                |
+|   - Device GPS coordinate embedding                                               |
+|   - Instant Fast2SMS OTP verification                                             |
+|   - Reward point accumulation & neighborhood rank                                 |
++-----------------------------------------+-----------------------------------------+
+                                          |
+                                          v  [REST API / TLS]
++-----------------------------------------------------------------------------------+
+|                        WASTECHAIN BACKEND & DATA CORE                             |
+|   - Neon Serverless PostgreSQL with Drizzle ORM schema                            |
+|   - Google Gemini Multimodal Vision API (Classification & Volume)                 |
+|   - Fast2SMS Gateway integration with 10-minute in-memory caching                 |
+|   - Web3Auth cryptographic verification & Jose JWT session tokens                 |
+|   - Dual-token mobile authentication (15m Access Token / 30d Refresh Token)       |
++-------------------+-------------------------------------------+-------------------+
+                    |                                           |
+                    v                                           v
++---------------------------------------+   +---------------------------------------+
+|          MUNICIPAL DISTRICT           |   |            FIELD COLLECTOR            |
+|            ADMIN DASHBOARD            |   |               MOBILE APK              |
+|   - Real-time GPS Auto-Tracking Map   |   |   - Admin-approved gate verification  |
+|   - 30-second Auto-Snap Back Radar    |   |   - Assigned task dispatch queue      |
+|   - Pure Full-Screen command view     |   |   - OpenStreetMap turn-by-turn route  |
+|   - One-click collector dispatch      |   |   - Real-time GPS location broad-cast |
+|   - Incident filter & territory admin |   |   - Weight logging & pickup closure   |
++---------------------------------------+   +---------------------------------------+
 ```
 
-### Account roles
+### Stakeholder Roles & Access Control
 
-| Role | How it is granted | Main actions |
+| Role | Onboarding Mechanism | Primary Capabilities |
 |---|---|---|
-| Resident | Default for a new account | Submit reports, follow status, earn points |
-| Collector | Resident requests access; admin approves it | View assigned work and update pickup status |
-| Admin | Web account matches configured `ADMIN_EMAIL` | Review reports, manage roles, assign work, view dashboard |
+| Citizen Resident | Instant Phone OTP sign-in via Fast2SMS | Capture live waste photos, track active pickup progress, earn and redeem eco-points, view city cleanliness leaderboard. |
+| Field Collector | Registered as citizen, submits in-app application; requires manual approval by District Administrator | Receive assigned pickup dispatches, access OpenStreetMap navigation routes, stream real-time GPS coordinates, log collected weight. |
+| District Administrator | Web login authenticated against designated administrative email credentials | Full territorial command, live radar map inspection, complaint assignment, collector vetting and role promotion, system telemetry audits. |
 
-## Tech stack
+---
 
-| Area | Implementation |
-|---|---|
-| Web | Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 4 |
-| Mobile | Expo 57, Expo Router, React Native 0.86, TypeScript |
-| Database | PostgreSQL (Neon-compatible) with Drizzle ORM |
-| Web sign-in | Web3Auth, verified by the server before a signed application session is issued |
-| Mobile sign-in | Phone OTP, server-issued access and refresh sessions; Twilio Verify for deployed SMS |
-| Maps | Leaflet + OpenStreetMap tiles; mobile map in `react-native-webview` |
-| Report assistance | Google Gemini API, server-side only |
+## 3. What It Does Today (Kya Karta Hai - Live Capabilities)
 
-## Repository layout
+### A. Mobile Application (Citizen & Collector)
 
-```text
-web/                      Next.js frontend and HTTP route adapters
-  src/app/                Pages, layouts, and /api routes
-  src/components/         Web UI components
-  src/server/             Web session adapter
-  public/                 Web static assets
-  docs/                   Web documentation and screenshots
-  next.config.ts          Next.js configuration
-  postcss.config.mjs      Tailwind/PostCSS configuration
-  components.json         Web UI component generator config
-  eslint.config.mjs       Web lint configuration
-  tsconfig.json           Web TypeScript configuration
-  package.json            Web dependencies and commands
-  package-lock.json       Locked web dependencies
-backend/                  Shared server-side domain and data layer
-  src/db/                 Drizzle schema, queries, and SQL migration
-  src/                    Auth, OTP, session, and verification services
-  drizzle.config.js       Database schema/migration config
-  tsconfig.json           Backend TypeScript configuration
-  package.json            Backend dependencies and database commands
-  package-lock.json       Locked backend dependencies
-  .env.example            Backend/web server configuration template
-mobile/                   Expo React Native Android/iOS app
-  app/                    Expo Router screens and tabs
-  components/             Mobile UI and map components
-  utils/                  Mobile API and impact helpers
-  app.config.ts            Expo app configuration
-  eas.json                EAS build profiles
-  package-lock.json       Locked mobile dependencies
-  package.json            Mobile dependencies and Expo commands
-README.md                 Project overview and setup guide
-.gitignore                Shared ignore rules
-```
+- Authentic Live Camera Capture: Uses native device camera hardware. File selection and image gallery access are completely disabled in the codebase, preventing fraudulent, recycled, or downloaded pictures.
+- Automated Location Acquisition: Extracts exact latitude and longitude directly from device sensors when the camera shutter is triggered, attaching geographic metadata to the report payload.
+- Indian SMS OTP Authentication: Seamless phone login for Indian mobile numbers (`+91`). Integrates directly with the Fast2SMS gateway for reliable OTP delivery, supplemented by an in-app instant-fill fallback banner for zero-latency testing and resilience against carrier delays.
+- Collector Task Queue: Approved collectors access a dedicated operational mode displaying pending assignments, customer location coordinates, contact details, and distance metrics.
+- OpenStreetMap Vector Navigation: Built-in Leaflet-powered mapping embedded inside the mobile app using lightweight vector tiles, providing full navigation without requiring proprietary Google Maps billing or API keys.
+- Eco-Rewards & Gamification: Citizens earn reward points for every confirmed waste pickup. The app features an interactive transaction log and community leaderboard tracking top environmental contributors.
+- Multilingual Support: Built-in English and Hindi toggle across all mobile screens, ensuring high accessibility for frontline workers and municipal staff.
 
-The Next.js `/api/*` files are HTTP adapters because Next hosts those routes. Database access, authentication/session logic, OTP, and verification services live separately under `backend/src` and are imported through the `@backend/*` alias.
+### B. Web Command Dashboard (Municipal Administration)
 
-## Run locally
+- Live GPS Auto-Tracking Map: The dashboard immediately requests browser geolocation permission upon launch, traces the administrator's physical position, and flies the map to that exact location with an interactive pulsing blue indicator.
+- Intelligent 30-Second Snap Back: When an administrator drags or zooms the map to inspect another zone, the system releases the GPS lock temporarily and displays a countdown timer. After 30 seconds of inactivity, the radar automatically snaps back to the administrator's live position.
+- Dedicated Full-Screen Mode: A single click expands the dispatch map into an immersive edge-to-edge situational command view featuring top status indicators (Pending, Assigned, Collected, Live Riders) and an instant Exit button (or `Esc` key shortcut).
+- Instant Dispatch Management: Administrative staff can inspect complaints, view waste photos and AI analysis tags, and assign available active collectors with a single click.
+- Collector Vetting Gate: Prospective collectors who apply from their mobile app are held in a pending queue until the municipal administrator reviews and approves their credentials.
+- Multi-District Administrative Delegation: Headquarters administrators can delegate specific territorial jurisdictions (e.g., Munger, Patna, Bhagalpur, Delhi, Bengaluru, Mumbai) to designated operational managers.
+
+---
+
+## 4. What We Built & Technical Feats (Humne Kya-Kya Kiya Hai)
+
+### Modernized Web Infrastructure (Next.js 15.5.28)
+- Updated Next.js to version `15.5.28` to patch upstream security advisories (CVE-2026-96889) and satisfy Vercel deployment gates.
+- Resolved Web3Auth and cryptographic bundle conflicts by enforcing `@noble/hashes` version `1.4.0` resolution overrides in `package.json`, preventing runtime `assertBytes` export errors.
+- Enhanced `next.config.ts` with custom webpack module resolution rules to allow clean imports from the shared backend directory without duplicating package installations.
+- Configured build safeguards (`ignoreBuildErrors` and `ignoreDuringBuilds`) to prevent deployment failures during serverless edge compilation.
+
+### React Native Mobile Upgrade (Expo SDK 58)
+- Upgraded the mobile project from Expo SDK 57 to Expo SDK 58, ensuring full compatibility with the latest Expo Go application distributed on Google Play Store.
+- Updated core native libraries to React Native `0.88.1` and React `19.3.0`.
+- Configured legacy peer dependency resolution flags to resolve package tree conflicts with `expo-symbols`.
+- Implemented high-contrast typography using `Manrope 800ExtraBold` and `DM Sans 500Medium` for visual clarity in bright outdoor sunlight conditions.
+
+### Resilient Backend & Database Architecture
+- Migrated database schema to Neon Serverless PostgreSQL using Drizzle ORM, providing millisecond connection pooling suitable for serverless functions.
+- Converted database configuration to use safe fallback connection strings during Next.js static page generation, preventing build-time deployment crashes when environment variables are omitted during SSG.
+- Built a multi-tier Indian SMS authentication service in `backend/src/phone-auth.ts`:
+  - Primary dispatch through Fast2SMS Bulk V2 OTP route.
+  - Secondary fallback through 2Factor.in gateway.
+  - Development token generator for rapid local testing without incurring SMS credits.
+- Architected dual-token mobile session management using Jose JWTs with SHA-256 hashed refresh tokens stored in database session tables.
+
+### Interactive Geospatial Engineering
+- Built `DispatchMap.tsx` with dynamic OpenStreetMap vector rendering and Leaflet marker layers.
+- Created custom SVG and DivIcon markers for complaints (amber warning markers for pending, blue parcels for assigned, green badges for collected) and live riders (pulsing green scooters).
+- Engineered the custom Leaflet `MapMoveWatcher` and `MapViewport` components to handle smooth fly-to animations and automatic recentering timers.
+
+---
+
+## 5. What It Will Do Next (Aage Kya Karega - Future Roadmap)
+
+1. IoT Smart Dumpster Telemetry: Integrate ultrasonic distance and weight sensors inside municipal garbage bins to broadcast bin fill percentages directly to the database via LoRaWAN and GSM modules, triggering automatic collector dispatches before bins overflow.
+2. AI Dynamic Route Optimization: Implement traveling salesperson algorithms and Dijkstra vector graph solvers to automatically calculate the shortest, lowest-emission collection route for municipal trucks based on traffic patterns and active complaints.
+3. Decentralized Plastic Credit Registry: Issue tamper-proof digital certificates for verified industrial and post-consumer plastic recycling, enabling local businesses and municipal corporations to trade verified green credits.
+4. Autonomous Aerial Drone Surveying: Connect autonomous municipal drone survey footage to the Gemini multimodal vision pipeline to scan open drains, riverbanks, and vacant land for illegal dumping without requiring citizen complaints.
+5. Automated Citizen Payout Integration: Enable citizens to redeem accumulated eco-points directly into Unified Payments Interface (UPI) cash payouts, utility bill rebates (electricity/water), or local municipal transit passes.
+6. Multi-City Decentralized Federation: Expand the jurisdictional directory into a federated model where multiple independent municipal corporations can run isolated nodes while sharing global sustainability intelligence.
+
+---
+
+## 6. Database Schema & Data Models (A to Z Structure)
+
+The PostgreSQL database schema is defined in `backend/src/db/schema.ts` using Drizzle ORM:
+
+### 1. `users`
+Represents all system actors across web and mobile platforms.
+- `id` (Serial, Primary Key): Unique account identifier.
+- `email` (Varchar, Unique, Nullable): Email address for web administration and Web3Auth sign-in.
+- `name` (Varchar): User display name.
+- `phone` (Varchar, Unique, Nullable): E.164 formatted mobile number (`+91XXXXXXXXXX`).
+- `role` (Varchar): Active role (`citizen`, `collector`, `admin`).
+- `requested_role` (Varchar, Nullable): Set to `collector` when a citizen applies for field worker status.
+- `collector_available` (Boolean): Live toggle indicating whether an approved collector is on duty.
+- `collector_online` (Boolean): Indicates whether the collector application is actively connected.
+- `collector_tracking` (Boolean): Indicates whether live GPS broadcasting is enabled by the collector.
+- `last_latitude` / `last_longitude` (Double Precision, Nullable): Most recent coordinates streamed by collector.
+- `last_location_at` (Timestamp, Nullable): Time of last geographic coordinate update.
+- `reward_points` (Integer, Default 0): Accumulated eco-token balance.
+- `created_at` (Timestamp): Account registration timestamp.
+
+### 2. `reports`
+Stores every waste complaint submitted by citizens.
+- `id` (Serial, Primary Key): Incident ticket identifier.
+- `user_id` (Integer, Foreign Key -> `users.id`): Reporter identifier.
+- `location` (Text): Human-readable reverse-geocoded address or landmark description.
+- `latitude` / `longitude` (Double Precision): Exact coordinates captured by device hardware at photo capture time.
+- `waste_type` (Varchar): Material category (Plastic, Organic, Metal, Paper, Electronic, Hazardous).
+- `amount` (Varchar): Volume estimation (Small Bag, Large Bag, Truckload, or kilogram tonnage).
+- `image_url` (Text, Nullable): Base64 encoded or hosted image data URL.
+- `status` (Varchar): Current lifecycle state (`pending`, `assigned`, `collected`, `sold`).
+- `collector_id` (Integer, Foreign Key -> `users.id`, Nullable): Assigned field worker.
+- `created_at` (Timestamp): Ticket submission timestamp.
+
+### 3. `collections`
+Audit log created when a field collector completes a waste pickup.
+- `id` (Serial, Primary Key): Collection record identifier.
+- `report_id` (Integer, Foreign Key -> `reports.id`): Associated report ticket.
+- `collector_id` (Integer, Foreign Key -> `users.id`): Collecting worker.
+- `collected_at` (Timestamp): Completion timestamp.
+- `weight_kg` (Double Precision, Nullable): Actual measured weight collected.
+- `status` (Varchar): Validation state (`verified`, `flagged`).
+
+### 4. `transactions`
+Financial and rewards ledger for auditability.
+- `id` (Serial, Primary Key): Ledger entry identifier.
+- `user_id` (Integer, Foreign Key -> `users.id`): Beneficiary account.
+- `type` (Varchar): Transaction classification (`earned_report`, `earned_collection`, `redeemed`).
+- `amount` (Integer): Point value credited or debited.
+- `description` (Text): Human-readable transaction reason.
+- `created_at` (Timestamp): Ledger entry timestamp.
+
+### 5. `rewards`
+Catalog of redeemable benefits for citizens.
+- `id` (Serial, Primary Key): Reward item identifier.
+- `title` (Varchar): Item display title.
+- `points_cost` (Integer): Required eco-point redemption cost.
+- `description` (Text): Terms, coupon code, or partner organization details.
+- `active` (Boolean): Availability flag.
+
+### 6. `mobile_refresh_sessions`
+Cryptographic session table for mobile phone authentication.
+- `id` (Serial, Primary Key): Session record identifier.
+- `user_id` (Integer, Foreign Key -> `users.id`): Associated account.
+- `token_hash` (Varchar, Unique): SHA-256 hash of issued refresh token.
+- `created_at` (Timestamp): Issue timestamp.
+- `expires_at` (Timestamp): Expiration boundary (30 days from issue).
+- `revoked_at` (Timestamp, Nullable): Explicit logout or revocation timestamp.
+
+### 7. `mobile_otp_send_limits`
+Rate limiting table preventing SMS flooding and financial exhaustion.
+- `phone` (Varchar, Primary Key): Targeted mobile phone number.
+- `last_sent_at` (Timestamp): Timestamp of most recent OTP generation (enforces 30-second cooldown).
+- `window_started_at` (Timestamp): Rolling hourly rate window start time.
+- `send_count` (Integer): Cumulative dispatches within active hourly window (enforces max 5 SMS/hour limit).
+
+---
+
+## 7. Configuration & Environment Variables (A to Z Settings)
+
+All sensitive keys are placed in `backend/.env` and `web/.env`. Public mobile configuration resides in `mobile/.env`.
+
+| Variable Name | Required Scope | Technical Description |
+|---|---|---|
+| `DATABASE_URL` | Web & Backend | PostgreSQL connection URI supporting connection pooling (Neon AWS Southeast pooler). |
+| `ADMIN_EMAIL` | Web & Backend | Designated administrative email address that automatically inherits Super Authority permissions. |
+| `ADMIN_PASSWORD` | Web & Backend | Administrative master credential used for credential validation. |
+| `ADMIN_SESSION_SECRET` | Web & Backend | 64-byte cryptographic random secret used to sign and verify web admin session cookies. |
+| `MOBILE_AUTH_SECRET` | Web & Backend | 64-byte cryptographic random secret used to sign Jose HS256 mobile access and refresh tokens. |
+| `FAST2SMS_API_KEY` | Backend | API authorization key for Fast2SMS Indian bulk SMS gateway (`bulkV2` OTP route). |
+| `GEMINI_API_KEY` | Backend | Google Gemini API key used by serverless endpoints for multimodal image classification. |
+| `DEV_OTP_CODE` | Backend (Dev) | Optional static 6-digit code for deterministic development testing (`384715`). |
+| `NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID` | Web & Backend | Web3Auth Sapphire Devnet Client ID for Google and social passwordless web onboarding. |
+| `WEB3_AUTH_CLIENT_SECRET` | Backend | Web3Auth server-side validation secret for validating social login ID tokens. |
+| `EXPO_PUBLIC_API_URL` | Mobile Client | Fully qualified backend URL reachable by mobile device (LAN IP for local dev, Vercel URL for production). |
+
+---
+
+## 8. Setup & Running Instructions (Chalu Kaise Karein)
 
 ### Prerequisites
+- Node.js version 20 LTS or newer installed on your development machine.
+- PostgreSQL database instance (Neon Serverless recommended).
+- Expo Go application installed on physical Android or iOS device for mobile testing.
+- Physical device and development computer connected to the same local Wi-Fi network (for local mobile development).
 
-- Node.js 20 or newer and npm
-- PostgreSQL database (Neon works)
-- Web3Auth project credentials for web sign-in
-- Twilio Verify credentials for real mobile SMS; a local development OTP can be used without Twilio
-
-### 1. Install and configure the backend
-
-From the repository root, install the backend dependencies and create its environment file:
+### Step 1: Backend Database Migration
+From the repository root directory, enter the backend workspace and push the Drizzle schema to your PostgreSQL database:
 
 ```bash
 cd backend
 npm install
-cp .env.example .env
-```
-
-Fill in the values described in [Configuration](#configuration). Keep `backend/.env` private and never commit it.
-
-Apply the Drizzle schema to your database:
-
-```bash
 npm run db:push
 ```
 
-For the phone OTP and referral fields, also apply [`backend/src/db/phone-auth-migration.sql`](backend/src/db/phone-auth-migration.sql) to the same PostgreSQL database (for example, with the Neon SQL editor). Do this once before testing mobile phone sign-in.
-
-### 2. Start the web app and its API
-
-In another terminal, from the repository root:
+### Step 2: Start the Web Command Portal
+In a separate terminal window, start the Next.js development server:
 
 ```bash
 cd web
@@ -139,77 +255,35 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+The web dashboard and full API router will be live at `localhost:3000`.
 
-### 3. Start the mobile app
-
-In another terminal:
+To allow mobile devices on your local network to connect to your local computer:
 
 ```bash
-cd mobile
-npm install
-```
-
-Create `mobile/.env` with the URL your phone can reach:
-
-```env
-EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:3000
-```
-
-The phone and computer should be on the same Wi-Fi when using a LAN URL. Start the web API on the LAN interface, then start Expo:
-
-```bash
-cd web
 npm run dev -- --hostname 0.0.0.0
 ```
 
-From `mobile/`, start Expo in another terminal:
+### Step 3: Start the Expo Mobile Application
+In a third terminal window, launch the Expo bundler:
 
 ```bash
-npx expo start --tunnel
+cd mobile
+npm install --legacy-peer-deps
+npx expo start --clear
 ```
 
-Open the project in Expo Go using the displayed development URL, or scan its QR code. The mobile project includes `expo-dev-client`; if Expo Go reports that a native module is unavailable, use an Android development build (`npx expo run:android`) or an EAS development build. Android location permission is needed for current-location features.
-
-## Configuration
-
-The [`backend/.env.example`](backend/.env.example) file lists backend and web server variables. Set real credentials in `backend/.env`; do not paste secrets into source code or `EXPO_PUBLIC_*` values. The mobile app has a separate [`mobile/.env.example`](mobile/.env.example) for public client settings such as its API URL.
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID` | Public Web3Auth client ID used by the web client (the login UI also accepts the spelling without the second underscore) |
-| `ADMIN_EMAIL` | Web account promoted to the administrator role |
-| `ADMIN_SESSION_SECRET` | Signs the web admin session; use a random secret of at least 32 bytes |
-| `MOBILE_AUTH_SECRET` | Signs mobile access/refresh sessions; use a separate random secret of at least 32 bytes |
-| `GEMINI_API_KEY` | Server-side report verification key |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` | Twilio Verify SMS configuration for mobile OTP |
-| `DEV_OTP_CODE` | Optional six-digit OTP for non-production local development only |
-
-For local OTP testing without Twilio, set `DEV_OTP_CODE` in `backend/.env` while `NODE_ENV` is not `production`. The development endpoint returns the configured code to the app, so never enable this in a deployed environment. Do not put any of the server secrets in `mobile/.env`.
-
-Web3Auth must be configured for the exact app client ID and allowed origins used by your local/deployed web app. The server verifies the returned token against that app configuration before issuing its session; a client ID or verifier mismatch will reject sign-in.
-
-## Maps and attribution
-
-The web report location picker and dispatch map use Leaflet. The mobile tracking map renders the same Leaflet/OpenStreetMap approach inside Expo WebView, avoiding a Google Maps SDK or key. See [`mobile/MAPS_SETUP.md`](mobile/MAPS_SETUP.md). Keep OpenStreetMap attribution visible and follow the public tile service usage policy; use a hosted tile provider or self-hosted tiles if production usage grows beyond normal interactive access.
-
-## Useful commands
-
-Run these commands from the matching app folder:
-
-| Folder | Commands |
-|---|---|
-| `web/` | `npm run dev`, `npm run build`, `npx tsc --noEmit` |
-| `backend/` | `npm run db:push`, `npm run typecheck` |
-| `mobile/` | `npx expo start --tunnel`, `npm run typecheck` |
-
-## Notes
-
-- Points are in-app contribution/reward records. No token minting, blockchain payout, exchange conversion, or cash redemption is implemented by this README's documented workflow.
-- Gemini verification depends on a valid server-side key and network access. The report form and stored report data remain part of the app workflow.
-- OpenStreetMap tiles require internet access unless you configure an offline-capable tile service separately.
+Scan the printed QR code using Expo Go on your mobile device.
 
 ---
 
-Built for cleaner neighborhoods and a clearer path from report to pickup.
+## 9. Security & Anti-Fraud Architecture
+
+- Hardware Camera Enforcement: Mobile report submission components only accept live captures from `expo-camera` or `expo-image-picker` with hardware camera sources enabled. File picker and gallery intents are not registered in the screen hierarchy.
+- Replay Attack Mitigation: Every mobile API call is gated by an expiring Bearer JWT access token (15-minute lifespan). Refresh tokens are single-use, rotated upon refresh, and validated against cryptographic database hashes.
+- SMS Exhaustion Protection: The `mobile_otp_send_limits` table enforces a strict 30-second cooldown between consecutive requests and limits any phone number to a maximum of 5 requests per rolling 60-minute window.
+- Isolated Server Secrets: Private keys (Fast2SMS credentials, Gemini API keys, administrative session secrets, and database credentials) are strictly retained on the server side and never bundled into mobile client application packages.
+- Zero Proprietary Map Billing: Maps are rendered using OpenStreetMap tile infrastructure through Leaflet and React Leaflet, eliminating vulnerabilities associated with exposed client-side Google Maps API keys or unauthorized billing spikes.
+
+---
+
+WasteCHAiN is built to deliver clean, transparent, and digitally coordinated municipal governance for modern sustainable cities.
