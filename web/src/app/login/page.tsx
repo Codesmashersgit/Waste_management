@@ -22,32 +22,25 @@ function LoginPageContent() {
     setErrorMsg('')
     try {
       const { Web3Auth } = await import('@web3auth/modal')
-      const { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } = await import('@web3auth/base')
-      const { EthereumPrivateKeyProvider } = await import('@web3auth/ethereum-provider')
 
-      const privateKeyProvider = new EthereumPrivateKeyProvider({
-        config: {
-          chainConfig: {
-            chainNamespace: CHAIN_NAMESPACES.EIP155,
-            chainId: '0xaa36a7',
-            rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
-            displayName: 'Ethereum Sepolia Testnet',
-            blockExplorerUrl: 'https://sepolia.etherscan.io',
-            ticker: 'ETH',
-            tickerName: 'Ethereum',
-          },
-        },
-      })
-
+      // Use modern Web3Auth v11 configuration (no deprecated ethereum-provider required)
       const web3auth = new Web3Auth({
         clientId: CLIENT_ID,
-        web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
-        privateKeyProvider,
+        web3AuthNetwork: 'sapphire_devnet',
+        chainConfig: {
+          chainNamespace: 'eip155',
+          chainId: '0xaa36a7',
+          rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
+          displayName: 'Ethereum Sepolia Testnet',
+          blockExplorerUrl: 'https://sepolia.etherscan.io',
+          ticker: 'ETH',
+          tickerName: 'Ethereum',
+        },
         uiConfig: {
           appName: 'WasteCHAiN',
           mode: 'dark',
           theme: { primary: '#10b981' },
-          loginMethodsOrder: ['google', 'email_passwordless'] as const,
+          loginMethodsOrder: ['google', 'email_passwordless'],
           primaryButton: 'socialLogin',
         },
       })
@@ -55,7 +48,7 @@ function LoginPageContent() {
       await web3auth.initModal()
       const provider = await web3auth.connect()
 
-      if (provider) {
+      if (provider || web3auth.connected) {
         const user = await web3auth.getUserInfo()
         let idToken = user.idToken
         if (!idToken) {

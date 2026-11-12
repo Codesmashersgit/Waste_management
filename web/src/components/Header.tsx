@@ -9,31 +9,31 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Web3Auth } from "@web3auth/modal"
-import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base"
-import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { useLanguage } from "@/contexts/LanguageContext"
 
 const clientId = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID || "BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps";
 
-const chainConfig = {
-  chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0xaa36a7",
-  rpcTarget: "https://ethereum-sepolia-rpc.publicnode.com",
-  displayName: "Ethereum Sepolia Testnet",
-  blockExplorerUrl: "https://sepolia.etherscan.io",
-  ticker: "ETH",
-  tickerName: "Ethereum",
-  logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-};
-
-const privateKeyProvider = new EthereumPrivateKeyProvider({ config: { chainConfig } });
-
-const web3auth = new Web3Auth({
-  clientId,
-  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
-  privateKeyProvider,
-});
+let web3authInstance: Web3Auth | null = null;
+function getWeb3Auth() {
+  if (typeof window === 'undefined') return null;
+  if (!web3authInstance) {
+    web3authInstance = new Web3Auth({
+      clientId,
+      web3AuthNetwork: 'sapphire_devnet',
+      chainConfig: {
+        chainNamespace: 'eip155',
+        chainId: '0xaa36a7',
+        rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
+        displayName: 'Ethereum Sepolia Testnet',
+        blockExplorerUrl: 'https://sepolia.etherscan.io',
+        ticker: 'ETH',
+        tickerName: 'Ethereum',
+      },
+    });
+  }
+  return web3authInstance;
+}
 
 type HeaderNotification = { id: number; type: string; message: string };
 type HeaderUser = { email?: string; name?: string };
@@ -57,14 +57,17 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
     const init = async () => {
       try {
-        await web3auth.initModal();
-        if (web3auth.connected) {
-          setLoggedIn(true);
-          const user = await web3auth.getUserInfo();
-          if (user && user.email) {
-            localStorage.setItem('userEmail', user.email);
-            if (user.name) localStorage.setItem('userName', user.name);
-            setUserInfo({ email: user.email, name: user.name || undefined });
+        const web3auth = getWeb3Auth();
+        if (web3auth) {
+          await web3auth.initModal();
+          if (web3auth.connected) {
+            setLoggedIn(true);
+            const user = await web3auth.getUserInfo();
+            if (user && user.email) {
+              localStorage.setItem('userEmail', user.email);
+              if (user.name) localStorage.setItem('userName', user.name);
+              setUserInfo({ email: user.email, name: user.name || undefined });
+            }
           }
         }
         const response = await fetch('/api/web/account', { cache: 'no-store', credentials: 'include' });
@@ -111,6 +114,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
   const logout = async () => {
     try {
+      const web3auth = getWeb3Auth();
       if (web3auth && web3auth.connected) {
         await web3auth.logout();
       }
