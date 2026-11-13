@@ -22,20 +22,24 @@ function LoginPageContent() {
     setErrorMsg('')
     try {
       const { Web3Auth } = await import('@web3auth/modal')
+      const { CHAIN_NAMESPACES } = await import('@web3auth/base')
+      const { EthereumPrivateKeyProvider } = await import('@web3auth/ethereum-provider')
 
-      // Use modern Web3Auth v11 configuration (no deprecated ethereum-provider required)
+      const chainConfig = {
+        chainNamespace: CHAIN_NAMESPACES.EIP155,
+        chainId: '0xaa36a7',
+        rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
+        displayName: 'Ethereum Sepolia Testnet',
+        blockExplorerUrl: 'https://sepolia.etherscan.io',
+        ticker: 'ETH',
+        tickerName: 'Ethereum',
+      }
+      const privateKeyProvider = new EthereumPrivateKeyProvider({ config: { chainConfig } })
       const web3auth = new Web3Auth({
         clientId: CLIENT_ID,
         web3AuthNetwork: 'sapphire_devnet',
-        chainConfig: {
-          chainNamespace: 'eip155',
-          chainId: '0xaa36a7',
-          rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
-          displayName: 'Ethereum Sepolia Testnet',
-          blockExplorerUrl: 'https://sepolia.etherscan.io',
-          ticker: 'ETH',
-          tickerName: 'Ethereum',
-        },
+        chainConfig,
+        privateKeyProvider,
         uiConfig: {
           appName: 'WasteCHAiN',
           mode: 'dark',

@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Web3Auth } from "@web3auth/modal"
+import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { useLanguage } from "@/contexts/LanguageContext"
 
@@ -18,18 +19,20 @@ let web3authInstance: Web3Auth | null = null;
 function getWeb3Auth() {
   if (typeof window === 'undefined') return null;
   if (!web3authInstance) {
+    const chainConfig = {
+      chainNamespace: 'eip155' as const,
+      chainId: '0xaa36a7',
+      rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
+      displayName: 'Ethereum Sepolia Testnet',
+      blockExplorerUrl: 'https://sepolia.etherscan.io',
+      ticker: 'ETH',
+      tickerName: 'Ethereum',
+    };
     web3authInstance = new Web3Auth({
       clientId,
       web3AuthNetwork: 'sapphire_devnet',
-      chainConfig: {
-        chainNamespace: 'eip155',
-        chainId: '0xaa36a7',
-        rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
-        displayName: 'Ethereum Sepolia Testnet',
-        blockExplorerUrl: 'https://sepolia.etherscan.io',
-        ticker: 'ETH',
-        tickerName: 'Ethereum',
-      },
+      chainConfig,
+      privateKeyProvider: new EthereumPrivateKeyProvider({ config: { chainConfig } }),
     });
   }
   return web3authInstance;

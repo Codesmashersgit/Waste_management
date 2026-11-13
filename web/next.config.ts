@@ -15,9 +15,8 @@ const nextConfig: NextConfig = {
   },
   webpack: (config) => {
     config.resolve.modules = [
-      path.resolve(process.cwd(), "node_modules"),
-      "node_modules",
       ...(config.resolve.modules || []),
+      path.resolve(process.cwd(), "node_modules"),
     ];
     return config;
   },
