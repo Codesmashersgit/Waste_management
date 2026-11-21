@@ -18,6 +18,17 @@ const nextConfig: NextConfig = {
       ...(config.resolve.modules || []),
       path.resolve(process.cwd(), "node_modules"),
     ];
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@noble/hashes/sha3.js': '@noble/hashes/sha3',
+      '@noble/hashes/sha2.js': '@noble/hashes/sha2',
+      '@noble/hashes/sha256.js': '@noble/hashes/sha256',
+      '@noble/hashes/sha512.js': '@noble/hashes/sha512',
+      '@noble/hashes/ripemd160.js': '@noble/hashes/ripemd160',
+      '@noble/hashes/hmac.js': '@noble/hashes/hmac',
+      '@noble/hashes/pbkdf2.js': '@noble/hashes/pbkdf2',
+      '@noble/hashes/utils.js': '@noble/hashes/utils',
+    };
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
       "@solana/codecs-data-structures": false,
