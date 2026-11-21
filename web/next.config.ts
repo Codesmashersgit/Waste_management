@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
       '@noble/hashes/hmac.js': '@noble/hashes/hmac',
       '@noble/hashes/pbkdf2.js': '@noble/hashes/pbkdf2',
       '@noble/hashes/utils.js': '@noble/hashes/utils',
+      '@noble/hashes/_assert': path.resolve(process.cwd(), 'src/lib/noble-assert-shim.js'),
     };
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
