@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
       ...(config.resolve.modules || []),
       path.resolve(process.cwd(), "node_modules"),
     ];
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      "@solana/codecs-data-structures": false,
+      "@solana/kit": false,
+      "@solana/codecs": false,
+      "@solana/errors": false,
+      fs: false,
+      net: false,
+      tls: false,
+    };
     return config;
   },
 };

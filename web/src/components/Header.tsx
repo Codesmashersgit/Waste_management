@@ -8,35 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { Web3Auth } from "@web3auth/modal"
-import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { useLanguage } from "@/contexts/LanguageContext"
-
-const clientId = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID || "BJxBpqjekUHtHmPdxNWbLSt222ZMsm2n7IZIztGMbiynfijSRWhQKpgtEzUJBBfJFTcuaai9SKCkIERQlb-paps";
-
-let web3authInstance: Web3Auth | null = null;
-function getWeb3Auth() {
-  if (typeof window === 'undefined') return null;
-  if (!web3authInstance) {
-    const chainConfig = {
-      chainNamespace: 'eip155' as const,
-      chainId: '0xaa36a7',
-      rpcTarget: 'https://ethereum-sepolia-rpc.publicnode.com',
-      displayName: 'Ethereum Sepolia Testnet',
-      blockExplorerUrl: 'https://sepolia.etherscan.io',
-      ticker: 'ETH',
-      tickerName: 'Ethereum',
-    };
-    web3authInstance = new Web3Auth({
-      clientId,
-      web3AuthNetwork: 'sapphire_devnet',
-      chainConfig,
-      privateKeyProvider: new EthereumPrivateKeyProvider({ config: { chainConfig } }),
-    });
-  }
-  return web3authInstance;
-}
 
 type HeaderNotification = { id: number; type: string; message: string };
 type HeaderUser = { email?: string; name?: string };
@@ -60,36 +33,23 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
     const init = async () => {
       try {
-        const web3auth = getWeb3Auth();
-        if (web3auth) {
-          await web3auth.initModal();
-          if (web3auth.connected) {
-            setLoggedIn(true);
-            const user = await web3auth.getUserInfo();
-            if (user && user.email) {
-              localStorage.setItem('userEmail', user.email);
-              if (user.name) localStorage.setItem('userName', user.name);
-              setUserInfo({ email: user.email, name: user.name || undefined });
-            }
-          }
-        }
         const response = await fetch('/api/web/account', { cache: 'no-store', credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setLoggedIn(true);
           setUserInfo(data.user);
           setBalance(data.balance);
-          setNotifications(data.notifications);
+          setNotifications(data.notifications || []);
           localStorage.setItem('userEmail', data.user.email || '');
           localStorage.setItem('userName', data.user.name || '');
         } else if (response.status === 401) {
-          setLoggedIn(false);
-          setUserInfo(null);
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userName');
+          if (!cachedEmail) {
+            setLoggedIn(false);
+            setUserInfo(null);
+          }
         }
       } catch (error) {
-        console.error("Error initializing Web3Auth:", error);
+        console.error("Error loading account:", error);
       } finally {
         setLoading(false);
       }
@@ -104,7 +64,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
       if (!response.ok) return;
       const data = await response.json();
       setBalance(data.balance);
-      setNotifications(data.notifications);
+      setNotifications(data.notifications || []);
     };
     const interval = setInterval(() => void refreshAccount(), 30000);
     const handleBalanceUpdate = (e: CustomEvent) => setBalance(e.detail);
@@ -117,12 +77,8 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
   const logout = async () => {
     try {
-      const web3auth = getWeb3Auth();
-      if (web3auth && web3auth.connected) {
-        await web3auth.logout();
-      }
-    } catch (error) { console.error("Logout error:", error); }
-    try { await fetch('/api/auth/session', { method: 'DELETE' }); } catch {}
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    } catch {}
     setLoggedIn(false); 
     setUserInfo(null);
     localStorage.removeItem('userEmail');
@@ -131,40 +87,49 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   };
 
   const handleNotificationClick = async (id: number) => {
-    await fetch('/api/web/account', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notificationId: id }) });
+    await fetch('/api/web/account', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationId: id })
+    });
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   if (loading) {
     return (
-      <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 flex items-center px-4">
+      <header className="h-16 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/60 sticky top-0 z-50 flex items-center px-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-green-100 animate-pulse" />
-          <div className="w-24 h-4 rounded bg-green-100 animate-pulse" />
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 animate-pulse" />
+          <div className="w-24 h-4 rounded bg-emerald-500/20 animate-pulse" />
         </div>
       </header>
     );
   }
 
   return (
-    <header className="h-16 bg-white/90 backdrop-blur-md border-b border-gray-100 fixed top-0 w-full z-50 shadow-sm">
+    <header className="h-16 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800/80 fixed top-0 w-full z-50 shadow-lg">
       <div className="flex items-center justify-between h-full px-4 gap-3">
 
         {/* Left: Menu + Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2.5 flex-shrink-0">
           <button
             onClick={onMenuClick}
-            className="p-2 rounded-xl text-gray-500 hover:bg-green-50 hover:text-green-600 transition-all duration-200 lg:hidden"
+            className="p-2 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-emerald-400 transition-all duration-200 lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="p-1.5 rounded-xl bg-green-600 group-hover:bg-green-700 transition-colors">
-              <Leaf className="h-5 w-5 text-white" />
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="p-2 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 group-hover:scale-105 transition-all shadow-md shadow-emerald-500/20">
+              <Leaf className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:flex flex-col leading-none">
-              <span className="font-bold text-gray-900 text-base tracking-tight">WASTE-CHAiN</span>
-              <span className="text-[9px] text-gray-400 font-medium">{t('header.tagline')}</span>
+              <span className="font-extrabold text-white text-base tracking-tight">
+                WASTE<span className="text-emerald-400">CHAiN</span>
+              </span>
+              <span className="text-[10px] text-gray-400 font-medium tracking-wide">
+                {t('header.tagline') || 'Smart Municipal Grid'}
+              </span>
             </div>
           </Link>
         </div>
@@ -173,121 +138,122 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         {!isMobile && (
           <div className="flex-1 max-w-md mx-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
-                placeholder={t('header.search')}
-                className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder={t('header.search') || 'Search reports, fleet, districts...'}
+                className="w-full pl-10 pr-4 py-2 text-sm bg-gray-900/90 border border-gray-800 text-gray-200 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
               />
             </div>
           </div>
         )}
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2.5 flex-shrink-0">
           {/* Mobile search */}
           {isMobile && (
-            <button className="p-2 rounded-xl text-gray-500 hover:bg-green-50 hover:text-green-600 transition-all">
+            <button className="p-2 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-emerald-400 transition-all">
               <Search className="h-5 w-5" />
             </button>
           )}
 
-          {/* 🌐 Language Toggle */}
+          {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-all duration-200 text-xs font-bold text-gray-600 hover:text-green-700"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-800 bg-gray-900/80 hover:bg-gray-800 hover:border-emerald-500/40 transition-all duration-200 text-xs font-bold text-gray-300 hover:text-emerald-300"
             title="Switch Language"
           >
-            🌐 {lang === 'en' ? 'हिं' : 'EN'}
+            <span>🌐</span>
+            <span>{lang === 'en' ? 'हिंदी' : 'EN'}</span>
           </button>
 
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 rounded-xl text-gray-500 hover:bg-green-50 hover:text-green-600 transition-all duration-200">
+              <button className="relative p-2 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-emerald-400 transition-all duration-200">
                 <Bell className="h-5 w-5" />
                 {notifications.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-emerald-500 rounded-full text-black text-[9px] font-black flex items-center justify-center animate-pulse">
                     {notifications.length}
                   </span>
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 rounded-2xl shadow-xl border border-gray-100">
-              <div className="p-3 border-b border-gray-50">
-                <p className="text-sm font-semibold text-gray-700">{t('header.notifications')}</p>
+            <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-2xl border border-gray-800 bg-gray-900 text-gray-100 p-2">
+              <div className="p-3 border-b border-gray-800/80">
+                <p className="text-xs font-extrabold text-gray-300 uppercase tracking-wider">{t('header.notifications') || 'Alerts & Telemetry'}</p>
               </div>
               {notifications.length > 0 ? (
                 notifications.map((n) => (
                   <DropdownMenuItem
                     key={n.id}
                     onClick={() => handleNotificationClick(n.id)}
-                    className="p-3 cursor-pointer hover:bg-green-50"
+                    className="p-3 cursor-pointer hover:bg-gray-800/80 rounded-xl transition"
                   >
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">{n.type}</span>
-                      <span className="text-sm text-gray-600">{n.message}</span>
+                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">{n.type}</span>
+                      <span className="text-sm text-gray-300">{n.message}</span>
                     </div>
                   </DropdownMenuItem>
                 ))
               ) : (
-                <div className="p-6 text-center text-gray-400 text-sm">
-                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  {t('header.no_notifications')}
+                <div className="p-6 text-center text-gray-500 text-xs">
+                  <Bell className="h-6 w-6 mx-auto mb-2 opacity-30 text-emerald-400" />
+                  {t('header.no_notifications') || 'No new notifications'}
                 </div>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Balance Badge */}
-          <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
-            <Coins className="h-4 w-4 text-green-600" />
-            <span className="font-bold text-sm text-green-700">{balance.toFixed(0)}</span>
-            <span className="text-xs text-green-500 hidden sm:inline">{t('header.pts')}</span>
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3 py-1.5 shadow-sm">
+            <Coins className="h-4 w-4 text-emerald-400" />
+            <span className="font-extrabold text-sm text-emerald-300">{balance.toFixed(0)}</span>
+            <span className="text-[11px] text-emerald-400/80 font-bold hidden sm:inline">{t('header.pts') || 'PTS'}</span>
           </div>
 
-          {/* Auth */}
+          {/* Auth Button */}
           {!loggedIn ? (
             <Link href="/login">
-              <button className="cursor-pointer flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-green-200 hover:shadow-md">
+              <button className="cursor-pointer flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/20 hover:scale-105 active:scale-95">
                 <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('header.login')}</span>
+                <span>{t('header.login') || 'Sign In'}</span>
               </button>
             </Link>
           ) : (
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2.5 bg-green-50/80 border border-green-200/80 hover:bg-green-100 text-green-900 text-sm font-medium px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-green-600 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow-xs">
+                  <button className="flex items-center gap-2.5 bg-gray-900 border border-gray-800 hover:border-emerald-500/40 text-gray-200 text-sm font-medium px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
                       {(userInfo?.name?.[0] || userInfo?.email?.[0] || 'U').toUpperCase()}
                     </div>
                     <div className="flex flex-col text-left leading-none">
-                      <span className="font-semibold text-xs text-gray-800 max-w-[120px] truncate">
-                        {userInfo?.name || userInfo?.email?.split('@')[0] || 'User'}
+                      <span className="font-bold text-xs text-white max-w-[120px] truncate">
+                        {userInfo?.name || userInfo?.email?.split('@')[0] || 'Admin'}
                       </span>
-                      <span className="text-[10px] text-green-600 font-medium">{t('header.logged_in')}</span>
+                      <span className="text-[9px] text-emerald-400 font-semibold uppercase tracking-wider">{t('header.logged_in') || 'Active'}</span>
                     </div>
                     <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl shadow-xl border border-gray-100 p-1.5">
-                  <div className="p-3 border-b border-gray-100 bg-gray-50/50 rounded-xl mb-1">
-                    <p className="text-sm font-bold text-gray-800 truncate">{userInfo?.name || 'User'}</p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{userInfo?.email || ''}</p>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl shadow-2xl border border-gray-800 bg-gray-900 text-gray-200 p-2">
+                  <div className="p-3 border-b border-gray-800 bg-gray-950/60 rounded-xl mb-1.5">
+                    <p className="text-xs font-bold text-white truncate">{userInfo?.name || 'Administrator'}</p>
+                    <p className="text-[11px] text-gray-400 truncate mt-0.5">{userInfo?.email || ''}</p>
                   </div>
-                  <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                    <Link href="/settings">👤 {t('header.profile')}</Link>
+                  <DropdownMenuItem asChild className="cursor-pointer m-0.5 rounded-xl text-xs hover:bg-gray-800 hover:text-emerald-300">
+                    <Link href="/settings">👤 Profile & Settings</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="cursor-pointer m-1 rounded-xl">
-                    <Link href="/rewards">🪙 {t('header.rewards')}</Link>
+                  <DropdownMenuItem asChild className="cursor-pointer m-0.5 rounded-xl text-xs hover:bg-gray-800 hover:text-emerald-300">
+                    <Link href="/rewards">🪙 Eco-Token Rewards</Link>
                   </DropdownMenuItem>
-                  <div className="border-t border-gray-50 mt-1 pt-1">
+                  <div className="border-t border-gray-800 mt-1.5 pt-1.5">
                     <DropdownMenuItem
                       onClick={logout}
-                      className="cursor-pointer m-1 rounded-xl text-red-500 hover:bg-red-50 focus:text-red-500 font-medium"
+                      className="cursor-pointer m-0.5 rounded-xl text-xs text-rose-400 hover:bg-rose-950/50 hover:text-rose-300 font-bold"
                     >
-                      <LogOut className="h-4 w-4 mr-2" /> {t('header.sign_out')}
+                      <LogOut className="h-4 w-4 mr-2" /> {t('header.sign_out') || 'Sign Out'}
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>
